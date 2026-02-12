@@ -11,7 +11,13 @@ import {
     RotateCcw,
     XCircle,
     Info,
-    Zap
+    Zap,
+    Send,
+    Eye,
+    Edit3,
+    Target,
+    ClipboardList,
+    Search
 } from 'lucide-react';
 
 export function UserGuide() {
@@ -83,6 +89,85 @@ export function UserGuide() {
                         <StatusStep status="Active" desc="In execution. Targeted for result capture." icon={<CheckCircle2 size={16} />} color="emerald" />
                         <StatusStep status="Rework" desc="Requires specific changes by the owner." icon={<RotateCcw size={16} />} color="orange" />
                         <StatusStep status="Closed" desc="Completed with final ROI recorded." icon={<TrendingUp size={16} />} color="primary" />
+                    </div>
+                </div>
+            </section>
+
+            <section className="space-y-8">
+                <div className="text-center space-y-2">
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Operating Manual</h2>
+                    <p className="text-slate-500 font-medium">Step-by-step instructions for a seamless experience.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                <Users size={20} />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900">For Submitters</h3>
+                        </div>
+                        <div className="space-y-8 relative before:absolute before:left-[19px] before:top-8 before:bottom-0 before:w-0.5 before:bg-slate-100">
+                            <Step
+                                num="1"
+                                title="Launch Submission"
+                                icon={<Send size={16} />}
+                                desc="Navigate to 'New Submission' and fill in the initiative baseline: title, process, and estimated ROI."
+                            />
+                            <Step
+                                num="2"
+                                title="Track Status"
+                                icon={<Eye size={16} />}
+                                desc="Monitor the 'Dashboard'. A status of 'Pending' means it's awaiting manager review."
+                            />
+                            <Step
+                                num="3"
+                                title="Address Feedback"
+                                icon={<Edit3 size={16} />}
+                                desc="If you see 'Rework', view the record to read feedback, then use 'Edit & Resubmit' to update."
+                            />
+                            <Step
+                                num="4"
+                                title="Realize Value"
+                                icon={<Target size={16} />}
+                                desc="Once execution is done, locate your 'Active' project and submit actual financials to 'Close' it."
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+                                <ShieldCheck size={20} />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900">For Reviewers</h3>
+                        </div>
+                        <div className="space-y-8 relative before:absolute before:left-[19px] before:top-8 before:bottom-0 before:w-0.5 before:bg-slate-100">
+                            <Step
+                                num="1"
+                                title="Audit Queue"
+                                icon={<ClipboardList size={16} />}
+                                desc="Check the 'Review Queue' regularly for new initiatives assigned to your department."
+                            />
+                            <Step
+                                num="2"
+                                title="Review Baseline"
+                                icon={<Search size={16} />}
+                                desc="Open records to evaluate strategic alignment, methodology choice, and benefit estimates."
+                            />
+                            <Step
+                                num="3"
+                                title="Decision Action"
+                                icon={<CheckCircle2 size={16} />}
+                                desc="Choose 'Approve' to activate or 'Request Rework' with clear instructions for the owner."
+                            />
+                            <Step
+                                num="4"
+                                title="Govern Portfolio"
+                                icon={<TrendingUp size={16} />}
+                                desc="Use the 'Governance' dashboard to see the departmental audit trail and portfolio health."
+                            />
+                        </div>
                     </div>
                 </div>
             </section>
@@ -167,6 +252,25 @@ function FeatureHighlight({ title, icon, description }) {
             <div className="space-y-2">
                 <h4 className="font-black text-slate-900 uppercase tracking-widest text-xs">{title}</h4>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">{description}</p>
+            </div>
+        </div>
+    );
+}
+
+function Step({ num, title, icon, desc }) {
+    return (
+        <div className="flex gap-6 relative z-10">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-sm font-black text-slate-400 group-hover:border-primary-500 transition-colors">
+                {num}
+            </div>
+            <div className="space-y-1.5 pt-1.5">
+                <h4 className="flex items-center gap-2 font-black text-slate-900 leading-none">
+                    <span className="text-primary-500">{icon}</span>
+                    {title}
+                </h4>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-sm">
+                    {desc}
+                </p>
             </div>
         </div>
     );
