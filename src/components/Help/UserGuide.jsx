@@ -10,7 +10,8 @@ import {
     Clock,
     RotateCcw,
     XCircle,
-    Info
+    Info,
+    Zap
 } from 'lucide-react';
 
 export function UserGuide() {
