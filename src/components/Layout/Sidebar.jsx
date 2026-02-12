@@ -11,6 +11,8 @@ import {
     Zap
 } from 'lucide-react';
 import { NavItem } from '../Common';
+import { HelpCircle } from 'lucide-react';
+
 
 export function Sidebar({ user, activeView, setView, stats, onSwitchUser }) {
     return (
@@ -33,7 +35,9 @@ export function Sidebar({ user, activeView, setView, stats, onSwitchUser }) {
                 <NavItem icon={<TrendingUp size={18} />} label="Closure" active={activeView === 'closure'} onClick={() => setView('closure')} />
 
                 <div className="pt-8 mt-8 border-t border-slate-800/60 flex flex-col space-y-1.5">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 px-4">Administration</p>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 px-4">Support</p>
+                    <NavItem icon={<HelpCircle size={18} />} label="User Guide" active={activeView === 'guide'} onClick={() => setView('guide')} />
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 px-4 mt-6">Administration</p>
                     <NavItem icon={<ShieldCheck size={18} />} label="Governance" onClick={() => { }} />
                     <NavItem icon={<Settings size={18} />} label="System Settings" onClick={() => { }} />
                 </div>
