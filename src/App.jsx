@@ -4,6 +4,7 @@ import { Dashboard } from './components/Dashboard/Dashboard';
 import { SubmissionForm } from './components/Forms/SubmissionForm';
 import { ProjectDetails } from './components/Projects/ProjectDetails';
 import { UserGuide } from './components/Help/UserGuide';
+import { Governance } from './components/Administration/Governance';
 import { useProjectData } from './hooks/useProjectData';
 import { PROJECT_STATUS } from './constants/projectConstants';
 import { Zap } from 'lucide-react';
@@ -143,6 +144,10 @@ export default function App() {
 
           {view === 'guide' && (
             <UserGuide />
+          )}
+
+          {view === 'governance' && (
+            <Governance projects={projects} />
           )}
 
           {view === 'details' && (

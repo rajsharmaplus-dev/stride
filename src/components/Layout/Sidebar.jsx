@@ -38,7 +38,7 @@ export function Sidebar({ user, activeView, setView, stats, onSwitchUser }) {
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 px-4">Support</p>
                     <NavItem icon={<HelpCircle size={18} />} label="User Guide" active={activeView === 'guide'} onClick={() => setView('guide')} />
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 px-4 mt-6">Administration</p>
-                    <NavItem icon={<ShieldCheck size={18} />} label="Governance" onClick={() => { }} />
+                    <NavItem icon={<ShieldCheck size={18} />} label="Governance" active={activeView === 'governance'} onClick={() => setView('governance')} />
                     <NavItem icon={<Settings size={18} />} label="System Settings" onClick={() => { }} />
                 </div>
             </nav>
