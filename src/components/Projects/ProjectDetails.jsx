@@ -19,13 +19,19 @@ import {
 } from 'lucide-react';
 
 
-import { StatusBadge, DetailItem, formatCurrency } from '../Common';
-import { PROJECT_STATUS } from '../../constants/projectConstants';
+import { StatusBadge, DetailItem } from '../Common';
+import { formatCurrency } from '../../utils/format';
+import { PROJECT_STATUS, ROLE_THEME } from '../../constants/projectConstants';
 import { MOCK_USERS } from '../../data/mockData';
 
 export function ProjectDetails({ project: p, user, onBack, onUpdateStatus, onCloseProject, onEditAndResubmit }) {
+    const [comment, setComment] = useState('');
+    const [closureData, setClosureData] = useState({ investment: '', roi: '' });
+    const [closureErrors, setClosureErrors] = useState({});
+
     if (!p) return null;
 
+    const theme = ROLE_THEME[user?.role] || ROLE_THEME['Employee'];
     const isOwner = p.submitterId === user.id;
     const isManager = p.managerId === user.id;
     const isLocked = [PROJECT_STATUS.ACTIVE, PROJECT_STATUS.CLOSED, PROJECT_STATUS.DECLINED].includes(p.status);
@@ -35,10 +41,6 @@ export function ProjectDetails({ project: p, user, onBack, onUpdateStatus, onClo
 
     // Edge case PD-52: fallback for unknown submitter
     const submitterName = MOCK_USERS.find(u => u.id === p.submitterId)?.name || 'Unknown User';
-
-    const [comment, setComment] = useState('');
-    const [closureData, setClosureData] = useState({ investment: '', roi: '' });
-    const [closureErrors, setClosureErrors] = useState({});
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-fade-in pb-20">
@@ -111,12 +113,12 @@ export function ProjectDetails({ project: p, user, onBack, onUpdateStatus, onClo
                         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-4">
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Value Definition</h3>
-                                <div className="p-8 bg-slate-900 rounded-[2rem] text-white relative overflow-hidden group">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-400 mb-2">Estimated Annual Benefit</p>
+                                <div className="p-8 rounded-[2rem] text-white relative overflow-hidden group" style={{ background: theme.sidebarBg }}>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-2" style={{ color: theme.pillText }}>Estimated Annual Benefit</p>
                                     <p className="text-4xl font-black tracking-tighter text-white">
                                         {formatCurrency(p.estimatedBenefit)}
                                     </p>
-                                    <DollarSign className="absolute right-[-10px] bottom-[-10px] text-white/5 w-24 h-24 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                                    <DollarSign className="absolute right-[-10px] bottom-[-10px] w-24 h-24 rotate-12 group-hover:rotate-0 transition-transform duration-500" style={{ color: `${theme.accent}20` }} />
                                 </div>
                             </div>
 
@@ -239,10 +241,10 @@ export function ProjectDetails({ project: p, user, onBack, onUpdateStatus, onClo
 
                     {/* Closure Tracking */}
                     {isOwner && p.status === PROJECT_STATUS.ACTIVE && (
-                        <div className="bg-white rounded-[2rem] shadow-2xl shadow-primary-500/10 border-t-8 border-primary-600 p-8 space-y-6 animate-fade-in">
+                        <div className="bg-white rounded-[2rem] shadow-2xl p-8 space-y-6 animate-fade-in border-t-8" style={{ borderTopColor: theme.accent, boxShadow: `0 20px 40px ${theme.accentShadow}` }}>
                             <div className="flex items-center gap-4">
-                                <div className="bg-primary-50 p-3 rounded-2xl">
-                                    <TrendingUp size={28} className="text-primary-600" />
+                                <div className="p-3 rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
+                                    <TrendingUp size={28} style={{ color: theme.accent }} />
                                 </div>
                                 <div>
                                     <h3 className="font-black text-slate-900 text-lg leading-tight">Record Results</h3>
@@ -288,7 +290,8 @@ export function ProjectDetails({ project: p, user, onBack, onUpdateStatus, onClo
                                         if (Object.keys(errs).length > 0) { setClosureErrors(errs); return; }
                                         onCloseProject(p.id, closureData.investment, closureData.roi);
                                     }}
-                                    className="w-full bg-primary-600 text-white py-4 rounded-2xl hover:bg-primary-700 font-black disabled:opacity-50 transition-all active:scale-95 shadow-lg shadow-primary-500/20"
+                                    className="w-full text-white py-4 rounded-2xl font-black disabled:opacity-50 transition-all active:scale-95 shadow-lg hover:opacity-90"
+                                    style={{ background: theme.badgeBg, boxShadow: `0 8px 24px ${theme.accentShadow}` }}
                                 >
                                     Finalize Record
                                 </button>

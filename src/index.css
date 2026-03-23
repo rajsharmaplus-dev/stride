@@ -1,5 +1,6 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
 
 
 @theme {
@@ -66,4 +67,21 @@
 
 .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Role switch transition — a short flash + fade for intuitive session awareness */
+@keyframes roleFlash {
+    0%   { opacity: 1; }
+    20%  { opacity: 0.15; transform: scale(0.995); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.role-transition {
+    animation: roleFlash 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Sidebar smooth color transition */
+.sidebar-themed {
+    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }

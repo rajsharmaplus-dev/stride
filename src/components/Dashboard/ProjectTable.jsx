@@ -1,137 +1,233 @@
-import React, { useState } from 'react';
-import { Search, ChevronRight, FileSpreadsheet, Download, X } from 'lucide-react';
-import { StatusBadge, formatCurrency } from '../Common';
+import React, { useState, useMemo } from 'react';
+import { Search, ChevronRight, FileSpreadsheet, Download, X, ArrowUpDown, Calendar, Tag, Check, Edit2 } from 'lucide-react';
+import { StatusBadge } from '../Common';
+import { formatCurrency } from '../../utils/format';
 
-export function ProjectTable({ projects, onSelectProject }) {
+export function ProjectTable({ projects, onSelectProject, onEditProject, onSelectionChange, theme, currentUser }) {
     const [searchTerm, setSearchTerm] = useState('');
+    const [sortKey, setSortKey] = useState(null);
+    const [sortDir, setSortDir] = useState('asc');
+    const [selectedIds, setSelectedIds] = useState([]);
 
-    // Edge case T-14: search now covers title, process, type, methodology, and status
     const searchLower = searchTerm.toLowerCase();
-    const filtered = searchTerm
-        ? projects.filter(p =>
-            (p.title || '').toLowerCase().includes(searchLower) ||
-            (p.process || '').toLowerCase().includes(searchLower) ||
-            (p.type || '').toLowerCase().includes(searchLower) ||
-            (p.methodology || '').toLowerCase().includes(searchLower) ||
-            (p.status || '').toLowerCase().includes(searchLower)
-        )
-        : projects;
+    const filtered = useMemo(() => {
+        let result = searchTerm
+            ? projects.filter(p =>
+                (p.title || '').toLowerCase().includes(searchLower) ||
+                (p.process || '').toLowerCase().includes(searchLower) ||
+                (p.type || '').toLowerCase().includes(searchLower) ||
+                (p.methodology || '').toLowerCase().includes(searchLower) ||
+                (p.status || '').toLowerCase().includes(searchLower)
+            )
+            : [...projects];
+
+        if (sortKey) {
+            result.sort((a, b) => {
+                const av = sortKey === 'estimatedBenefit' ? (parseFloat(a[sortKey]) || 0) : (a[sortKey] || '');
+                const bv = sortKey === 'estimatedBenefit' ? (parseFloat(b[sortKey]) || 0) : (b[sortKey] || '');
+                return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+            });
+        }
+        return result;
+    }, [projects, searchTerm, sortKey, sortDir, searchLower]);
+
+    const toggleSort = (key) => {
+        if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        else { setSortKey(key); setSortDir('asc'); }
+    };
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            const allIds = filtered.map(p => p.id);
+            setSelectedIds(allIds);
+            onSelectionChange?.(allIds);
+        } else {
+            setSelectedIds([]);
+            onSelectionChange?.([]);
+        }
+    };
+
+    const toggleSelect = (e, id) => {
+        e.stopPropagation();
+        let next;
+        if (selectedIds.includes(id)) {
+            next = selectedIds.filter(i => i !== id);
+        } else {
+            next = [...selectedIds, id];
+        }
+        setSelectedIds(next);
+        onSelectionChange?.(next);
+    };
 
     return (
-        <div className="glass-card rounded-2xl overflow-hidden border-none shadow-sm">
-            <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-3">
-                    <div className="bg-primary-50 p-2 rounded-lg">
-                        <FileSpreadsheet size={18} className="text-primary-600" />
+                    <div className="p-2 rounded-xl" style={{ backgroundColor: theme?.accentMuted || '#f1f5f9' }}>
+                        <FileSpreadsheet size={16} style={{ color: theme?.accent || '#64748b' }} />
                     </div>
-                    <h2 className="text-base font-bold text-slate-800 tracking-tight">Project Portfolio</h2>
-                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{filtered.length} of {projects.length}</span>
+                    <div>
+                        <h2 className="text-sm font-black text-slate-800 tracking-tight">Project Portfolio</h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            {filtered.length} of {projects.length} records {selectedIds.length > 0 && `· ${selectedIds.length} selected`}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2.5 w-full md:w-auto">
                     <div className="relative group flex-1 md:w-72">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors" size={15} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-500 transition-colors" size={14} />
                         <input
                             type="text"
-                            placeholder="Search by title, process, type, status..."
-                            className="pl-9 pr-9 py-2 bg-slate-50 border-none rounded-xl w-full focus:ring-2 focus:ring-primary-500/20 outline-none transition-all text-sm font-medium"
+                            placeholder="Search initiatives..."
+                            className="pl-9 pr-9 py-2.5 bg-slate-50 border border-transparent rounded-xl w-full focus:ring-2 outline-none transition-all text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:bg-white focus:border-slate-200"
+                            style={{ ['--tw-ring-color']: theme?.accentMuted }}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        {/* Clear button for search */}
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 transition-colors"
                             >
-                                <X size={14} />
+                                <X size={13} />
                             </button>
                         )}
                     </div>
-                    <button
-                        onClick={() => {
-                            const csvHeader = 'Title,Process,Type,Methodology,Status,Estimated Benefit\n';
-                            const csvRows = projects.map(p =>
-                                `"${p.title}","${p.process}","${p.type}","${p.methodology}","${p.status}","${p.estimatedBenefit}"`
-                            ).join('\n');
-                            const blob = new Blob([csvHeader + csvRows], { type: 'text/csv' });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = 'project_portfolio.csv';
-                            a.click();
-                            URL.revokeObjectURL(url);
-                        }}
-                        className="p-2.5 bg-primary-50 text-primary-600 rounded-xl hover:bg-primary-100 transition-colors border border-primary-100"
-                        title="Export as CSV"
-                    >
-                        <Download size={16} />
-                    </button>
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Table */}
+            <div className="overflow-x-auto relative">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-slate-50/50 border-b border-slate-100">
-                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Initiative Detail</th>
-                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Governance</th>
-                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Status</th>
-                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Estimated Value</th>
-                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 text-right">Actions</th>
+                        <tr className="bg-slate-50/60 border-b border-slate-100">
+                            <th className="pl-6 pr-2 py-3.5 w-10">
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                        checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                                        onChange={handleSelectAll}
+                                        style={{ accentColor: theme?.accent }}
+                                    />
+                                </div>
+                            </th>
+                            <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <SortBtn label="Initiative" k="title" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
+                            </th>
+                            <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <SortBtn label="Governance" k="process" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
+                            </th>
+                            <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <SortBtn label="Status" k="status" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
+                            </th>
+                            <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <SortBtn label="Est. Value" k="estimatedBenefit" sortKey={sortKey} theme={theme} toggleSort={toggleSort} />
+                            </th>
+                            <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {filtered.map(project => (
-                            <tr
-                                key={project.id}
-                                className="hover:bg-slate-50/80 cursor-pointer transition-all duration-200 group"
-                                onClick={() => onSelectProject(project)}
-                            >
-                                <td className="px-8 py-5 max-w-xs">
-                                    {/* Edge case T-12: long titles truncate gracefully */}
-                                    <p className="font-bold text-slate-900 group-hover:text-primary-600 transition-colors text-sm truncate">{project.title || 'Untitled'}</p>
-                                    <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-widest">{project.type || '—'}</p>
-                                </td>
-                                <td className="px-8 py-5">
-                                    <div className="flex flex-col">
-                                        <span className="text-xs font-bold text-slate-700">{project.process || '—'}</span>
-                                        <span className="text-[10px] text-slate-400 font-medium">{project.methodology || '—'}</span>
-                                    </div>
-                                </td>
-                                <td className="px-8 py-5">
-                                    <StatusBadge status={project.status} />
-                                </td>
-                                <td className="px-8 py-5">
-                                    <div className="flex flex-col">
-                                        {/* Edge case T-11/E-20: safe currency formatting */}
-                                        <span className="text-sm font-black text-slate-900">{formatCurrency(project.estimatedBenefit)}</span>
-                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Annual Baseline</span>
-                                    </div>
-                                </td>
-                                <td className="px-8 py-5 text-right">
-                                    <button className="inline-flex items-center gap-1.5 text-primary-600 font-black text-[10px] uppercase tracking-widest hover:gap-2.5 transition-all">
-                                        View Record <ChevronRight size={14} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                        {filtered.map(project => {
+                            const isSelected = selectedIds.includes(project.id);
+                            const isOwner = project.submitterId === currentUser?.id;
+
+                            return (
+                                <tr
+                                    key={project.id}
+                                    className={`group transition-all duration-150 ${isSelected ? 'bg-slate-50/90' : 'hover:bg-slate-50/50'} cursor-pointer`}
+                                    onClick={() => onSelectProject(project)}
+                                >
+                                    <td className="pl-6 pr-2 py-4" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 rounded border-slate-300 focus:ring-offset-0 cursor-pointer transition-transform active:scale-90"
+                                            checked={isSelected}
+                                            onChange={(e) => toggleSelect(e, project.id)}
+                                            style={{ accentColor: theme?.accent }}
+                                        />
+                                    </td>
+                                    <td className="px-4 py-4 max-w-xs">
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-bold text-slate-900 text-sm truncate group-hover:text-slate-700 transition-colors">
+                                                {project.title || 'Untitled'}
+                                            </p>
+                                            {isOwner && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); onEditProject(project); }}
+                                                    className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white hover:shadow-sm transition-all"
+                                                    title="Edit Project"
+                                                >
+                                                    <Edit2 size={12} style={{ color: theme?.accent }} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 mt-1">
+                                            <Tag size={9} className="text-slate-300" />
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{project.type || '—'}</p>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <p className="text-xs font-bold text-slate-700">{project.process || '—'}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{project.methodology || '—'}</p>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <StatusBadge status={project.status} />
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <p className="text-sm font-black text-slate-900">{formatCurrency(project.estimatedBenefit)}</p>
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                            <Calendar size={9} className="text-slate-300" />
+                                            <p className="text-[10px] text-slate-400 font-bold">{project.targetDate || '—'}</p>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div
+                                            className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-50 text-slate-400 transition-all duration-200 group-hover:scale-110 group-hover:text-white group-hover:shadow-sm"
+                                            style={{ ['--hover-bg']: theme?.accent }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme?.accent}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
+                                        >
+                                            <ChevronRight size={14} className="transition-colors" />
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
+
                 {filtered.length === 0 && (
-                    <div className="py-24 flex flex-col items-center justify-center text-slate-300 gap-3">
-                        <Search size={48} className="opacity-20" />
-                        <p className="text-sm font-bold uppercase tracking-widest italic opacity-40">
-                            {searchTerm ? `No results for "${searchTerm}"` : 'No records found matching your baseline'}
-                        </p>
-                        {searchTerm && (
-                            <button onClick={() => setSearchTerm('')} className="text-xs text-primary-500 font-bold hover:underline">
-                                Clear search
-                            </button>
-                        )}
+                    <div className="py-24 flex flex-col items-center justify-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center">
+                            <Search size={24} className="text-slate-200" />
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm font-bold text-slate-400">
+                                {searchTerm ? `No results for "${searchTerm}"` : 'No records found'}
+                            </p>
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm('')} className="text-xs font-bold mt-2 hover:underline" style={{ color: theme?.accent }}>
+                                    Clear search
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
         </div>
+    );
+}
+
+function SortBtn({ label, k, sortKey, theme, toggleSort }) {
+    return (
+        <button onClick={() => toggleSort(k)} className="flex items-center gap-1 group hover:text-slate-700 transition-colors">
+            {label}
+            <ArrowUpDown size={10} className={`${sortKey === k ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'} transition-opacity`} style={sortKey === k ? { color: theme?.accent } : {}} />
+        </button>
     );
 }
