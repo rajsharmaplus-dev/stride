@@ -8,11 +8,13 @@ import { Governance } from './components/Administration/Governance';
 import { useProjectData } from './hooks/useProjectData';
 import { ROLE_THEME, PROJECT_STATUS } from './constants/projectConstants';
 import { BulkActionBar } from './components/Common';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, LayoutDashboard, FileText, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import { exportProjectsToCSV } from './utils/csvExport';
 
 export default function App() {
   const {
     user,
+    users,
     projects,
     stats,
     handleSwitchUser,
@@ -20,6 +22,8 @@ export default function App() {
     updateProject,
     updateProjectStatus,
     closeProject,
+    deleteProjects,
+    batchUpdateStatus,
     loading
   } = useProjectData();
 
@@ -102,6 +106,74 @@ export default function App() {
     setView('submit');
   };
 
+  const handleBulkExport = () => {
+    const selectedProjects = projects.filter(p => selectedIds.includes(p.id));
+    exportProjectsToCSV(selectedProjects);
+  };
+
+  const handleBulkDelete = async () => {
+    const eligibleIds = selectedProjects
+      .filter(p => (user?.role === 'Manager' || user?.role === 'Admin') || (p.submitterId === user?.id && (p.status === PROJECT_STATUS.DRAFT || p.status === PROJECT_STATUS.PENDING)))
+      .map(p => p.id);
+
+    if (eligibleIds.length === 0) return;
+
+    if (confirm(`Are you sure you want to delete ${eligibleIds.length} projects?`)) {
+      await deleteProjects(eligibleIds);
+      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    const eligibleIds = selectedProjects
+      .filter(p => (user?.role === 'Manager' || user?.role === 'Admin') && p.status === PROJECT_STATUS.PENDING)
+      .map(p => p.id);
+
+    if (eligibleIds.length > 0) {
+      await batchUpdateStatus(eligibleIds, PROJECT_STATUS.ACTIVE, 'Bulk approval from dashboard');
+      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+    }
+  };
+
+  const handleBulkDecline = async () => {
+    const eligibleIds = selectedProjects
+      .filter(p => (user?.role === 'Manager' || user?.role === 'Admin') && p.status === PROJECT_STATUS.PENDING)
+      .map(p => p.id);
+
+    if (eligibleIds.length > 0) {
+      await batchUpdateStatus(eligibleIds, PROJECT_STATUS.DECLINED, 'Bulk decline from dashboard');
+      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+    }
+  };
+
+  const handleBulkClose = async () => {
+    const eligibleIds = selectedProjects
+      .filter(p => p.submitterId === user?.id && p.status === PROJECT_STATUS.ACTIVE)
+      .map(p => p.id);
+
+    if (eligibleIds.length > 0) {
+      await batchUpdateStatus(eligibleIds, PROJECT_STATUS.CLOSED, 'Bulk closure from dashboard');
+      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+    }
+  };
+
+  // Determine which bulk actions to show based on user role and selection
+  const selectedProjects = useMemo(() => 
+    projects.filter(p => selectedIds.includes(p.id)),
+    [projects, selectedIds]
+  );
+
+  const hasPending = selectedProjects.some(p => p.status === PROJECT_STATUS.PENDING);
+  const hasActive = selectedProjects.some(p => p.status === PROJECT_STATUS.ACTIVE);
+  const hasDraftOrPending = selectedProjects.some(p => p.status === PROJECT_STATUS.DRAFT || p.status === PROJECT_STATUS.PENDING);
+
+  const canApprove = (user?.role === 'Manager' || user?.role === 'Admin') && hasPending;
+  
+  const canDelete = (user?.role === 'Manager' || user?.role === 'Admin') || 
+                    (hasDraftOrPending && selectedProjects.some(p => p.submitterId === user?.id));
+
+  const canClose = hasActive && selectedProjects.some(p => p.submitterId === user?.id);
+
 
   if (loading) {
     return (
@@ -168,8 +240,9 @@ export default function App() {
               projects={projects}
               stats={stats}
               theme={theme}
-              onSelectProject={() => setView('details')} // Temporary for now
+              onSelectProject={handleSelectProject}
               onEditProject={handleEditProject}
+              onCardClick={(v) => setView(v)}
               onSelectionChange={setSelectedIds}
               selectedIds={selectedIds}
               viewContext={null}
@@ -184,6 +257,7 @@ export default function App() {
               projects={displayProjects}
               onSelectProject={handleSelectProject}
               setView={setView}
+              onCardClick={(v) => setView(v)}
               viewContext="review"
             />
           )}
@@ -195,6 +269,7 @@ export default function App() {
               projects={displayProjects}
               onSelectProject={handleSelectProject}
               setView={setView}
+              onCardClick={(v) => setView(v)}
               viewContext="closure"
             />
           )}
@@ -213,13 +288,17 @@ export default function App() {
           )}
 
           {view === 'governance' && (
-            <Governance projects={projects} />
+            <Governance 
+              projects={projects} 
+              onSelectProject={handleSelectProject} 
+            />
           )}
 
           {view === 'details' && (
             <ProjectDetails
               project={selectedProject}
               user={user}
+              users={users}
               onBack={() => setView('dashboard')}
               onUpdateStatus={handleUpdateStatus}
               onCloseProject={handleCloseProject}
@@ -228,6 +307,19 @@ export default function App() {
           )}
         </div>
       </main>
+
+      <BulkActionBar 
+        count={selectedIds.length}
+        onExport={handleBulkExport}
+        onDelete={handleBulkDelete}
+        onApprove={handleBulkApprove}
+        onDecline={handleBulkDecline}
+        onClose={handleBulkClose}
+        theme={theme}
+        showDelete={canDelete}
+        showApproval={canApprove}
+        showClosing={canClose}
+      />
     </div>
   );
 }

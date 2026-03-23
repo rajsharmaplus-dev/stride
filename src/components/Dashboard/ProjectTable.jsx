@@ -3,11 +3,10 @@ import { Search, ChevronRight, FileSpreadsheet, Download, X, ArrowUpDown, Calend
 import { StatusBadge } from '../Common';
 import { formatCurrency } from '../../utils/format';
 
-export function ProjectTable({ projects, onSelectProject, onEditProject, onSelectionChange, theme, currentUser }) {
+export function ProjectTable({ projects, onSelectProject, onEditProject, onSelectionChange, selectedIds = [], theme, currentUser }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortKey, setSortKey] = useState(null);
     const [sortDir, setSortDir] = useState('asc');
-    const [selectedIds, setSelectedIds] = useState([]);
 
     const searchLower = searchTerm.toLowerCase();
     const filtered = useMemo(() => {
@@ -39,10 +38,8 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
     const handleSelectAll = (e) => {
         if (e.target.checked) {
             const allIds = filtered.map(p => p.id);
-            setSelectedIds(allIds);
             onSelectionChange?.(allIds);
         } else {
-            setSelectedIds([]);
             onSelectionChange?.([]);
         }
     };
@@ -55,7 +52,6 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
         } else {
             next = [...selectedIds, id];
         }
-        setSelectedIds(next);
         onSelectionChange?.(next);
     };
 

@@ -24,7 +24,7 @@ import { formatCurrency } from '../../utils/format';
 import { PROJECT_STATUS, ROLE_THEME } from '../../constants/projectConstants';
 import { MOCK_USERS } from '../../data/mockData';
 
-export function ProjectDetails({ project: p, user, onBack, onUpdateStatus, onCloseProject, onEditAndResubmit }) {
+export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateStatus, onCloseProject, onEditAndResubmit }) {
     const [comment, setComment] = useState('');
     const [closureData, setClosureData] = useState({ investment: '', roi: '' });
     const [closureErrors, setClosureErrors] = useState({});
@@ -39,8 +39,8 @@ export function ProjectDetails({ project: p, user, onBack, onUpdateStatus, onClo
     // Edge case PD-51: guard against missing history array
     const history = Array.isArray(p.history) ? p.history : [];
 
-    // Edge case PD-52: fallback for unknown submitter
-    const submitterName = MOCK_USERS.find(u => u.id === p.submitterId)?.name || 'Unknown User';
+    // Edge case PD-52: fallback for unknown submitter - use dynamic users list
+    const submitterName = users.find(u => u.id === p.submitterId)?.name || 'Unknown User';
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-fade-in pb-20">

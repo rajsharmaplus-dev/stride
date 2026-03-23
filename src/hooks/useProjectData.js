@@ -160,6 +160,24 @@ export function useProjectData() {
 
 
 
+    const batchUpdateStatus = async (ids, status, note) => {
+        try {
+            await fetch(`${API_BASE}/projects/batch-update-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ids,
+                    status,
+                    user: user.name,
+                    note: note || `Bulk status update to ${status}`
+                })
+            });
+            await fetchData();
+        } catch (error) {
+            console.error('Failed to batch update status:', error);
+        }
+    };
+
     return {
         user: user || { name: 'Loading...', role: 'Employee' },
         projects,
@@ -170,6 +188,7 @@ export function useProjectData() {
         updateProject,
         updateProjectStatus,
         closeProject,
-        deleteProjects
+        deleteProjects,
+        batchUpdateStatus
     };
 }

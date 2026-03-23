@@ -22,7 +22,7 @@ const VIEW_CONTEXT = {
     },
 };
 
-export function Dashboard({ user, stats, projects, onSelectProject, onEditProject, onSelectionChange, selectedIds, setView, viewContext }) {
+export function Dashboard({ user, stats, projects, onSelectProject, onEditProject, onCardClick, onSelectionChange, selectedIds, setView, viewContext }) {
     const theme = ROLE_THEME[user?.role] || ROLE_THEME['Employee'];
     const ctx = VIEW_CONTEXT[viewContext] || ROLE_GREETINGS[user?.role] || ROLE_GREETINGS['Employee'];
     const hour = new Date().getHours();
@@ -31,8 +31,6 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
 
     return (
         <div className="space-y-8 animate-fade-in">
-            {/* ... same as before except the last line ... */}
-            {/* Header omitted for brevity in replacement chunk but stay same */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
                     {!isSubView && (
@@ -68,6 +66,7 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                     icon={<LayoutDashboard size={20} />}
                     theme={theme}
                     color="default"
+                    onClick={() => onCardClick?.('dashboard')}
                 />
                 <StatCard
                     title="Active Projects"
@@ -75,6 +74,7 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                     icon={<TrendingUp size={20} />}
                     theme={theme}
                     color="emerald"
+                    onClick={() => onCardClick?.('closure')}
                 />
                 <StatCard
                     title="Needs Review"
@@ -83,6 +83,7 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                     highlight={stats.pending > 0}
                     theme={theme}
                     color="amber"
+                    onClick={() => onCardClick?.('review')}
                 />
                 <StatCard
                     title="Realized ROI"

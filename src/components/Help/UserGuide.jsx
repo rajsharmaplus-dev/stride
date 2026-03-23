@@ -109,13 +109,13 @@ export function UserGuide() {
                                 num="1"
                                 title="Audit Queue"
                                 icon={<ClipboardList size={16} />}
-                                desc="Check the 'Review Queue' regularly for new initiatives assigned to your department."
+                                desc="Check the 'Review Queue' regularly or click the 'Needs Review' card on the dashboard."
                             />
                             <Step
                                 num="2"
-                                title="Review Baseline"
-                                icon={<Search size={16} />}
-                                desc="Open records to evaluate strategic alignment, methodology choice, and benefit estimates."
+                                title="Batch Approval"
+                                icon={<Zap size={16} />}
+                                desc="Select multiple 'Pending' projects using checkboxes to approve or decline them all at once."
                             />
                             <Step
                                 num="3"
@@ -127,10 +127,33 @@ export function UserGuide() {
                                 num="4"
                                 title="Govern Portfolio"
                                 icon={<TrendingUp size={16} />}
-                                desc="Use the 'Governance' dashboard to see the departmental audit trail and portfolio health."
+                                desc="Use 'Governance' to see the audit trail. Click any audit row to jump directly to project details."
                             />
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <section className="bg-slate-50 rounded-[2.5rem] p-10 border border-slate-200/60">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
+                        <Zap size={20} />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Advanced Operations</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <FeatureBox 
+                        title="Bulk Export" 
+                        desc="Select any number of initiatives and click 'Export' in the bulk action bar to download a CSV report." 
+                    />
+                    <FeatureBox 
+                        title="Quick Navigation" 
+                        desc="Stat cards on the dashboard are now interactive. Click them to jump to filtered project lists." 
+                    />
+                    <FeatureBox 
+                        title="Multi-Project Actions" 
+                        desc="Delete drafts or close active projects in bulk by selecting them on the dashboard." 
+                    />
                 </div>
             </section>
 
@@ -141,12 +164,12 @@ export function UserGuide() {
                         <Zap size={20} />
                     </div>
                     <div>
-                        <p className="text-sm font-black text-slate-900 uppercase tracking-widest leading-none mb-1">Demo Preparation</p>
-                        <p className="text-xs text-slate-500 font-medium">Ready to present Stride to your stakeholders.</p>
+                        <p className="text-sm font-black text-slate-900 uppercase tracking-widest leading-none mb-1">System Status</p>
+                        <p className="text-xs text-slate-500 font-medium">Bulk operations and interactive governance active.</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-primary-200 text-[10px] font-black text-primary-600 uppercase tracking-widest">
-                    Version 1.1 Live
+                    Version 1.2 Enhanced
                 </div>
             </footer>
         </div>
@@ -181,15 +204,24 @@ function Step({ num, title, icon, desc }) {
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-sm font-black text-slate-400 group-hover:border-primary-500 transition-colors">
                 {num}
             </div>
-            <div className="space-y-1.5 pt-1.5">
+            <div className="space-y-1.5 pt-1.5 flex-1">
                 <h4 className="flex items-center gap-2 font-black text-slate-900 leading-none">
                     <span className="text-primary-500">{icon}</span>
                     {title}
                 </h4>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-sm">
+                <p className="text-sm text-slate-500 font-medium leading-relaxed">
                     {desc}
                 </p>
             </div>
+        </div>
+    );
+}
+
+function FeatureBox({ title, desc }) {
+    return (
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-2">
+            <h4 className="font-black text-slate-900 text-xs uppercase tracking-widest">{title}</h4>
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">{desc}</p>
         </div>
     );
 }

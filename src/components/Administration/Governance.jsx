@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '../Common';
 
-export function Governance({ projects }) {
+export function Governance({ projects, onSelectProject }) {
     // Generate some mock audit events based on projects
     const auditEvents = projects.flatMap(p => {
         // Safely find a user name from history or use a fallback
@@ -146,7 +146,13 @@ export function Governance({ projects }) {
                                         <StatusBadge status={event.status} />
                                     </td>
                                     <td className="px-8 py-5">
-                                        <button className="p-2 hover:bg-white hover:shadow-md rounded-lg text-slate-400 hover:text-primary-600 transition-all group-hover:translate-x-1">
+                                        <button 
+                                            onClick={() => {
+                                                const project = projects.find(p => p.title === event.project);
+                                                if (project) onSelectProject(project);
+                                            }}
+                                            className="p-2 hover:bg-white hover:shadow-md rounded-lg text-slate-400 hover:text-primary-600 transition-all group-hover:translate-x-1"
+                                        >
                                             <ArrowRight size={16} />
                                         </button>
                                     </td>

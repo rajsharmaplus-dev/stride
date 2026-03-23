@@ -55,13 +55,16 @@ const STAT_COLORS = {
     },
 };
 
-export function StatCard({ title, value, icon, highlight, theme, color = 'default', trend }) {
+export function StatCard({ title, value, icon, highlight, theme, color = 'default', trend, onClick }) {
     const c = STAT_COLORS[color] || STAT_COLORS.default;
     const isAccent = color === 'accent';
 
     return (
-        <div className={`relative bg-white rounded-2xl p-5 border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden group
+        <div 
+            onClick={onClick}
+            className={`relative bg-white rounded-2xl p-5 border transition-all duration-300 overflow-hidden group
             ${isAccent ? 'border-transparent shadow-lg' : 'border-slate-100 shadow-sm'}
+            ${onClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-xl' : ''}
         `}
             style={isAccent
                 ? { background: theme?.badgeBg || '#0f172a', boxShadow: `0 8px 24px ${theme?.accentShadow || 'rgba(0,0,0,0.2)'}` }
@@ -146,12 +149,23 @@ export function DetailItem({ label, value, icon: Icon }) {
 }
 
 
-export function BulkActionBar({ count, onExport, onDelete, theme, showDelete = false }) {
+export function BulkActionBar({ 
+  count, 
+  onExport, 
+  onDelete, 
+  onApprove, 
+  onDecline, 
+  onClose,
+  theme, 
+  showDelete = false,
+  showApproval = false,
+  showClosing = false
+}) {
   if (count === 0) return null;
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-6 min-w-[320px]">
+      <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-6 min-w-fit whitespace-nowrap">
         <div className="flex items-center gap-3 pr-6 border-r border-white/10">
           <div 
             className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-lg"
@@ -165,14 +179,41 @@ export function BulkActionBar({ count, onExport, onDelete, theme, showDelete = f
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button 
             onClick={onExport}
+            title="Export to CSV"
             className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-white text-xs font-black uppercase tracking-wider transition-all"
           >
             <Download size={14} className="text-slate-400" />
-            Export CSV
+            Export
           </button>
+          
+          {showApproval && (
+            <>
+              <button 
+                onClick={onApprove}
+                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs font-black uppercase tracking-wider transition-all"
+              >
+                Approve
+              </button>
+              <button 
+                onClick={onDecline}
+                className="flex items-center gap-2 px-4 py-2.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-xl text-orange-400 text-xs font-black uppercase tracking-wider transition-all"
+              >
+                Decline
+              </button>
+            </>
+          )}
+
+          {showClosing && (
+            <button 
+              onClick={onClose}
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl text-indigo-400 text-xs font-black uppercase tracking-wider transition-all"
+            >
+              Close
+            </button>
+          )}
           
           {showDelete && (
             <button 
