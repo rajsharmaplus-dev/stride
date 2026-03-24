@@ -34,6 +34,7 @@ export function SubmissionForm({ user, onSubmit, onBack, initialData }) {
     });
     const [errors, setErrors] = useState({});
     const [showErrors, setShowErrors] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -64,11 +65,25 @@ export function SubmissionForm({ user, onSubmit, onBack, initialData }) {
         return errs;
     };
 
-    const handleSubmit = (isDraft) => {
-        if (isDraft) { onSubmit(formData, true); return; }
+    const handleSubmit = async (isDraft) => {
+        if (isDraft) {
+            setIsSubmitting(true);
+            try {
+                await onSubmit(formData, true);
+            } finally {
+                setIsSubmitting(false);
+            }
+            return;
+        }
         const errs = validate();
         if (Object.keys(errs).length > 0) { setErrors(errs); setShowErrors(true); return; }
-        onSubmit(formData, false);
+        
+        setIsSubmitting(true);
+        try {
+            await onSubmit(formData, false);
+        } catch (e) {
+            setIsSubmitting(false);
+        }
     };
 
     const completedFields = Object.values(formData).filter(v => v !== '').length;
@@ -201,16 +216,21 @@ export function SubmissionForm({ user, onSubmit, onBack, initialData }) {
 
                 {/* Action Footer */}
                 <div className="px-10 py-6 bg-slate-50/60 border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-3">
-                    <button onClick={() => handleSubmit(true)}
-                        className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95">
+                    <button 
+                        onClick={() => handleSubmit(true)}
+                        disabled={isSubmitting}
+                        className={`flex items-center justify-center gap-2 px-6 py-3 rounded-2xl border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-widest transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50 active:scale-95'}`}
+                    >
                         <Save size={15} className="text-slate-400" />
-                        Save Draft
+                        {isSubmitting ? 'Processing...' : 'Save Draft'}
                     </button>
-                    <button onClick={() => handleSubmit(false)}
-                        className="flex items-center justify-center gap-2 px-8 py-3 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95"
-                        style={{ background: theme.badgeBg, boxShadow: `0 6px 20px ${theme.accentShadow}` }}>
+                    <button 
+                        onClick={() => handleSubmit(false)}
+                        disabled={isSubmitting}
+                        className={`flex items-center justify-center gap-2 px-8 py-3 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-95'}`}
+                        style={{ background: theme.badgeBg, boxShadow: isSubmitting ? 'none' : `0 6px 20px ${theme.accentShadow}` }}>
                         <Send size={15} />
-                        {isRework ? 'Resubmit for Baseline' : 'Submit for Baseline'}
+                        {isSubmitting ? 'Submitting...' : (isRework ? 'Resubmit for Baseline' : 'Submit for Baseline')}
                     </button>
                 </div>
             </div>

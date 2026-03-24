@@ -13,26 +13,26 @@ import { StatusBadge } from '../Common';
 
 export function Governance({ projects, onSelectProject }) {
     // Generate some mock audit events based on projects
-    const auditEvents = projects.flatMap(p => {
+    const auditEvents = (projects || []).flatMap(p => {
         // Safely find a user name from history or use a fallback
-        const submitterName = p.history?.find(h => h.action === 'Submitted')?.user || 'Alex Submitter';
+        const submitterName = p?.history?.find(h => h.action === 'Submitted')?.user || 'Alex Submitter';
 
         const events = [
             {
-                id: `sub-${p.id}`,
+                id: `sub-${p?.id || Math.random()}`,
                 type: 'Submission',
-                project: p.title,
+                project: p?.title || 'Untitled Initiative',
                 user: submitterName,
-                date: p.createdAt || '2026-02-10',
+                date: p?.createdAt || '2026-02-10',
                 status: 'COMPLETED',
                 detail: 'Initial baseline submitted'
             }
         ];
-        if (p.status === 'ACTIVE' || p.status === 'CLOSED') {
+        if (p?.status === 'ACTIVE' || p?.status === 'CLOSED') {
             events.push({
-                id: `app-${p.id}`,
+                id: `app-${p?.id || Math.random()}`,
                 type: 'Approval',
-                project: p.title,
+                project: p?.title || 'Untitled Initiative',
                 user: 'Sarah Manager',
                 date: '2026-02-11',
                 status: 'COMPLETED',
@@ -40,7 +40,7 @@ export function Governance({ projects, onSelectProject }) {
             });
         }
         return events;
-    }).sort((a, b) => b.id.localeCompare(a.id));
+    }).sort((a, b) => (b?.id || '').localeCompare(a?.id || ''));
 
     return (
         <div className="space-y-10 animate-fade-in pb-20">

@@ -119,7 +119,7 @@ function getNavSections(role, stats, activeView, setView, theme) {
 export function Sidebar({ user, activeView, setView, stats, onSwitchUser }) {
     const theme = ROLE_THEME[user.role] || ROLE_THEME['Employee'];
     const sections = getNavSections(user.role, stats, activeView, setView, theme);
-    const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    const initials = (user.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
     return (
         <aside

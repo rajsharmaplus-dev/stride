@@ -21,56 +21,95 @@ async function fetchApi(endpoint, options = {}, userRole = null, userId = null) 
             ...options, 
             headers: { ...defaultOptions.headers, ...options.headers } 
         });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+
+        // 1. Handle Rate Limiting (429) Specifically
+        if (response.status === 429) {
+            const error = new Error('You have reached the request limit. Please wait 15 minutes before trying again.');
+            error.isRateLimit = true;
+            throw error;
         }
-        return await response.json();
+
+        const contentType = response.headers.get('content-type');
+        const isJson = contentType && contentType.includes('application/json');
+
+        if (!response.ok) {
+            // Attempt to get server error message if JSON, else use generic status
+            const errorData = isJson ? await response.json().catch(() => ({})) : {};
+            throw new Error(errorData.error || `Server Error: ${response.status} ${response.statusText}`);
+        }
+
+        // 2. Safe JSON Parsing
+        if (isJson) {
+            return await response.json();
+        }
+        
+        return null; // For 204 No Content or non-JSON success
     } catch (error) {
+        if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+            throw new Error('Network connection error. Please check your internet or server status.');
+        }
         console.error(`API Error [${endpoint}]:`, error);
         throw error;
     }
 }
 
-export function useProjectData() {
+export function useProjectManager() {
     const [user, setUser] = useState(null);
     const [users, setUsers] = useState([]);
     const [projects, setProjects] = useState([]);
+    const [totalCount, setTotalCount] = useState(0);
+    const [limit, setLimit] = useState(20);
     const [loading, setLoading] = useState(true);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (currentLimit = limit) => {
         try {
-            const [uData, pData] = await Promise.all([
-                fetchApi('/users', {}, user?.role, user?.id),
-                fetchApi('/projects', {}, user?.role, user?.id)
-            ]);
+            // 1. Fetch users first (public endpoint)
+            const uData = await fetchApi('/users', {}, user?.role, user?.id);
+            setUsers(uData || []);
             
-            setUsers(uData);
-            setProjects(pData);
-            
-            // Set initial user if not set
-            if (!user && uData.length > 0) {
-                setUser(uData[0]);
+            // 2. Identify current user (existing or first available)
+            let currentUser = user;
+            if (!user && uData?.length > 0) {
+                currentUser = uData[0];
+                setUser(currentUser);
+            }
+
+            // 3. Only fetch projects if identity is established
+            if (currentUser) {
+                const pData = await fetchApi(`/projects?limit=${currentLimit}`, {}, currentUser.role, currentUser.id);
+                setProjects(pData?.items || []);
+                setTotalCount(pData?.total || 0);
             }
         } catch (error) {
             // Error logged by fetchApi
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, limit]);
 
     useEffect(() => {
+        setLoading(true);
         fetchData();
     }, [fetchData]);
 
+    const loadMore = () => {
+        const nextLimit = limit + 20;
+        setLimit(nextLimit);
+        fetchData(nextLimit);
+    };
+
+    const triggerRefresh = () => {
+        fetchData();
+    };
+
     const stats = useMemo(() => {
         if (!user) return { total: 0, active: 0, pending: 0, roi: 0 };
-        const relevant = projects.filter(p => p.submitterId === user.id || p.managerId === user.id || user.role === 'Admin');
+        const relevant = projects.filter(p => p?.submitterId === user?.id || p?.managerId === user?.id || user?.role === 'Admin');
         return {
             total: relevant.length,
-            active: relevant.filter(p => p.status === PROJECT_STATUS.ACTIVE).length,
-            pending: relevant.filter(p => p.status === PROJECT_STATUS.PENDING && p.managerId === user.id).length,
-            roi: relevant.reduce((acc, p) => acc + (p.actualRoi || 0), 0)
+            active: relevant.filter(p => p?.status === PROJECT_STATUS.ACTIVE).length,
+            pending: relevant.filter(p => p?.status === PROJECT_STATUS.PENDING && p?.managerId === user?.id).length,
+            roi: relevant.reduce((acc, p) => acc + (p?.actualRoi || 0), 0)
         };
     }, [projects, user]);
 
@@ -105,9 +144,9 @@ export function useProjectData() {
                 body: JSON.stringify(newProject)
             }, user?.role, user?.id);
             await fetchData();
-            return true;
+            return { success: true };
         } catch (error) {
-            return false;
+            return { success: false, error: error.message };
         }
     };
 
@@ -123,9 +162,10 @@ export function useProjectData() {
                 })
             }, user?.role, user?.id);
             await fetchData();
-            return true;
+            return { success: true };
         } catch (error) {
-            return false;
+            const isNotFound = error.message.includes('404');
+            return { success: false, error: error.message, isNotFound };
         }
     };
 
@@ -141,9 +181,10 @@ export function useProjectData() {
                 })
             }, user?.role, user?.id);
             await fetchData();
-            return true;
+            return { success: true };
         } catch (error) {
-            return false;
+            const isNotFound = error.message.includes('404');
+            return { success: false, error: error.message, isNotFound };
         }
     };
 
@@ -151,7 +192,7 @@ export function useProjectData() {
         const investmentVal = parseFloat(investment);
         const roiVal = parseFloat(roi);
 
-        if (isNaN(investmentVal) || isNaN(roiVal)) return false;
+        if (isNaN(investmentVal) || isNaN(roiVal)) return { success: false, error: 'Invalid financials' };
 
         try {
             await fetchApi(`/projects/${projectId}`, {
@@ -166,9 +207,10 @@ export function useProjectData() {
                 })
             }, user?.role, user?.id);
             await fetchData();
-            return true;
+            return { success: true };
         } catch (error) {
-            return false;
+            const isNotFound = error.message.includes('404');
+            return { success: false, error: error.message, isNotFound };
         }
     };
 
@@ -179,9 +221,9 @@ export function useProjectData() {
                 body: JSON.stringify({ ids })
             }, user?.role, user?.id);
             await fetchData();
-            return true;
+            return { success: true };
         } catch (error) {
-            return false;
+            return { success: false, error: error.message };
         }
     };
 
@@ -197,9 +239,9 @@ export function useProjectData() {
                 })
             }, user?.role, user?.id);
             await fetchData();
-            return true;
+            return { success: true };
         } catch (error) {
-            return false;
+            return { success: false, error: error.message };
         }
     };
 
@@ -216,9 +258,9 @@ export function useProjectData() {
                 })
             }, user?.role, user?.id);
             await fetchData();
-            return true;
+            return { success: true };
         } catch (error) {
-            return false;
+            return { success: false, error: error.message };
         }
     };
 
@@ -226,7 +268,8 @@ export function useProjectData() {
         try {
             return await fetchApi(`/projects/${projectId}/comments`, {}, user?.role, user?.id);
         } catch (error) {
-            return [];
+            const isNotFound = error.message.includes('404');
+            return { error: error.message, isNotFound };
         }
     };
 
@@ -241,15 +284,17 @@ export function useProjectData() {
                     text
                 })
             }, user?.role, user?.id);
-            return true;
+            return { success: true };
         } catch (error) {
-            return false;
+            const isNotFound = error.message.includes('404');
+            return { success: false, error: error.message, isNotFound };
         }
     };
 
     return {
         user: user || { name: 'Loading...', role: 'Employee' },
         projects,
+        totalCount,
         stats,
         loading,
         handleSwitchUser,
@@ -261,6 +306,8 @@ export function useProjectData() {
         batchUpdateStatus,
         batchUpdateProjects,
         fetchComments,
-        addComment
+        addComment,
+        loadMore,
+        triggerRefresh
     };
 }

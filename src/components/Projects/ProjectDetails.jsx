@@ -30,6 +30,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
     const [comment, setComment] = useState('');
     const [closureData, setClosureData] = useState({ investment: '', roi: '' });
     const [closureErrors, setClosureErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
     const [isLoadingComments, setIsLoadingComments] = useState(false);
@@ -37,8 +38,13 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
     const loadComments = useCallback(async () => {
         setIsLoadingComments(true);
         if (typeof fetchComments === 'function') {
-            const data = await fetchComments(p.id);
-            setComments(data);
+            const result = await fetchComments(p.id);
+            if (result?.isNotFound) {
+                setComments([]);
+                // The parent app will likely handle the 404, but we can set a local state if needed
+            } else {
+                setComments(Array.isArray(result) ? result : []);
+            }
         }
         setIsLoadingComments(false);
     }, [p.id, fetchComments]);
@@ -50,13 +56,61 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
     }, [p?.id, loadComments]);
 
     const handleAddComment = async () => {
-        if (!newComment.trim()) return;
-        if (typeof addComment === 'function') {
-            const success = await addComment(p.id, newComment);
-            if (success) {
-                setNewComment('');
-                loadComments();
+        if (!newComment.trim() || isSubmitting) return;
+        setIsSubmitting(true);
+        try {
+            if (typeof addComment === 'function') {
+                const result = await addComment(p.id, newComment);
+                if (result?.success) {
+                    setNewComment('');
+                    loadComments();
+                } else if (result?.isNotFound) {
+                    // Handled by return to dashboard
+                }
             }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleUpdateStatus = async (status, note) => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+        try {
+            if (typeof onUpdateStatus === 'function') {
+                const result = await onUpdateStatus(p.id, status, note);
+                if (result?.isNotFound) {
+                    // Handled by parent
+                }
+                setComment(''); // Assuming comment is related to status update form
+            }
+        } catch (e) {
+            console.error("Failed to update status:", e);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCloseProject = async () => {
+        if (!closureData.investment || !closureData.roi || isSubmitting) return;
+
+        const errs = {};
+        if (parseFloat(closureData.investment) < 0) errs.investment = 'Investment cannot be negative';
+        if (parseFloat(closureData.roi) < 0) errs.roi = 'ROI cannot be negative';
+        if (Object.keys(errs).length > 0) { setClosureErrors(errs); return; }
+
+        setIsSubmitting(true);
+        try {
+            if (typeof onCloseProject === 'function') {
+                const result = await onCloseProject(p.id, closureData.investment, closureData.roi);
+                if (result?.isNotFound) {
+                    // Handled by parent
+                }
+            }
+        } catch (e) {
+            console.error("Failed to close project:", e);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -67,15 +121,15 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
     if (!p) return null;
 
     const theme = ROLE_THEME[user?.role] || ROLE_THEME['Employee'];
-    const isOwner = p.submitterId === user.id;
-    const isManager = p.managerId === user.id;
-    const isLocked = [PROJECT_STATUS.ACTIVE, PROJECT_STATUS.CLOSED, PROJECT_STATUS.DECLINED].includes(p.status);
+    const isOwner = p?.submitterId === user?.id;
+    const isManager = p?.managerId === user?.id;
+    const isLocked = [PROJECT_STATUS.ACTIVE, PROJECT_STATUS.CLOSED, PROJECT_STATUS.DECLINED].includes(p?.status);
 
     // Edge case PD-51: guard against missing history array
-    const history = Array.isArray(p.history) ? p.history : [];
+    const history = Array.isArray(p?.history) ? p.history : [];
 
     // Edge case PD-52: fallback for unknown submitter - use dynamic users list
-    const submitterName = users.find(u => u.id === p.submitterId)?.name || 'Unknown User';
+    const submitterName = users.find(u => u.id === p?.submitterId)?.name || 'Unknown User';
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-fade-in pb-20">
@@ -94,8 +148,8 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                         <header className="space-y-6">
                             <div className="flex flex-wrap items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
-                                    <StatusBadge status={p.status} />
-                                    <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">REF: {p.id.toUpperCase()}</span>
+                                    <StatusBadge status={p?.status} />
+                                    <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">REF: {p?.id?.toUpperCase() || 'N/A'}</span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {isLocked && (
@@ -113,7 +167,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                             </div>
 
                             <div className="space-y-4">
-                                <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">{p.title}</h2>
+                                <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">{p?.title || 'Untitled Initiative'}</h2>
                                 <div className="flex flex-wrap items-center gap-6">
                                     <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary-500">
@@ -130,7 +184,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                         </div>
                                         <div>
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Created On</p>
-                                            <p className="text-sm font-bold text-slate-800">{p.createdAt}</p>
+                                            <p className="text-sm font-bold text-slate-800">{p?.createdAt || '—'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -138,10 +192,10 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                         </header>
 
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 p-8 bg-slate-50/50 rounded-3xl border border-slate-100">
-                            <DetailItem label="Process" value={p.process} icon={Layers} />
-                            <DetailItem label="Category" value={p.type} icon={Activity} />
-                            <DetailItem label="Methodology" value={p.methodology} icon={Target} />
-                            <DetailItem label="Target Date" value={p.targetDate} icon={Clock} />
+                            <DetailItem label="Process" value={p?.process} icon={Layers} />
+                            <DetailItem label="Category" value={p?.type} icon={Activity} />
+                            <DetailItem label="Methodology" value={p?.methodology} icon={Target} />
+                            <DetailItem label="Target Date" value={p?.targetDate} icon={Clock} />
                         </div>
 
                         <section className="space-y-4">
@@ -149,7 +203,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                 Executive Summary
                             </h3>
                             <div className="text-slate-700 leading-relaxed text-sm bg-white p-6 rounded-3xl border border-slate-100 shadow-sm font-medium">
-                                {p.summary || <span className="text-slate-400 italic">No summary provided.</span>}
+                                {p?.summary || <span className="text-slate-400 italic">No summary provided.</span>}
                             </div>
                         </section>
 
@@ -159,25 +213,25 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                 <div className="p-8 rounded-[2rem] text-white relative overflow-hidden group" style={{ background: theme.sidebarBg }}>
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-2" style={{ color: theme.pillText }}>Estimated Annual Benefit</p>
                                     <p className="text-4xl font-black tracking-tighter text-white">
-                                        {formatCurrency(p.estimatedBenefit)}
+                                        {formatCurrency(p?.estimatedBenefit)}
                                     </p>
                                     <DollarSign className="absolute right-[-10px] bottom-[-10px] w-24 h-24 rotate-12 group-hover:rotate-0 transition-transform duration-500" style={{ color: `${theme.accent}20` }} />
                                 </div>
                             </div>
 
-                            {(p.status === PROJECT_STATUS.ACTIVE || p.status === PROJECT_STATUS.CLOSED) && (
+                            {(p?.status === PROJECT_STATUS.ACTIVE || p?.status === PROJECT_STATUS.CLOSED) && (
                                 <div className="space-y-4">
                                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Realized Value</h3>
-                                    <div className={`p-8 rounded-[2rem] border-2 transition-all min-h-[140px] flex flex-col justify-center ${p.status === PROJECT_STATUS.CLOSED ? 'bg-emerald-50 border-emerald-100 shadow-xl shadow-emerald-500/5' : 'bg-slate-50 border-slate-100'}`}>
-                                        {p.status === PROJECT_STATUS.CLOSED ? (
+                                    <div className={`p-8 rounded-[2rem] border-2 transition-all min-h-[140px] flex flex-col justify-center ${p?.status === PROJECT_STATUS.CLOSED ? 'bg-emerald-50 border-emerald-100 shadow-xl shadow-emerald-500/5' : 'bg-slate-50 border-slate-100'}`}>
+                                        {p?.status === PROJECT_STATUS.CLOSED ? (
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Investment</p>
-                                                    <p className="text-xl font-black text-emerald-950">{formatCurrency(p.actualInvestment)}</p>
+                                                    <p className="text-xl font-black text-emerald-950">{formatCurrency(p?.actualInvestment)}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Actual ROI</p>
-                                                    <p className="text-xl font-black text-emerald-950">{formatCurrency(p.actualRoi)}</p>
+                                                    <p className="text-xl font-black text-emerald-950">{formatCurrency(p?.actualRoi)}</p>
                                                 </div>
                                             </div>
                                         ) : (
@@ -191,7 +245,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                             )}
                         </section>
 
-                        {p.docLink && (
+                        {p?.docLink && (
                             <footer className="border-t border-slate-100 pt-10 flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
@@ -215,17 +269,17 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                             <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                                 {comments.length > 0 ? (
                                     comments.map((c, i) => (
-                                        <div key={i} className={`flex gap-4 ${c.user_id === user.id ? 'flex-row-reverse' : ''}`}>
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${c.user_id === user.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                                {c.user_name.charAt(0)}
+                                        <div key={i} className={`flex gap-4 ${c?.user_id === user?.id ? 'flex-row-reverse' : ''}`}>
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${c?.user_id === user?.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                                {c?.user_name?.charAt(0) || '?'}
                                             </div>
-                                            <div className={`space-y-1.5 max-w-[80%] ${c.user_id === user.id ? 'items-end' : ''}`}>
+                                            <div className={`space-y-1.5 max-w-[80%] ${c?.user_id === user?.id ? 'items-end' : ''}`}>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight">{c.user_name}</span>
-                                                    <span className="text-[9px] text-slate-300 font-bold">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight">{c?.user_name || 'Anonymous'}</span>
+                                                    <span className="text-[9px] text-slate-300 font-bold">{c?.timestamp ? new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
                                                 </div>
-                                                <div className={`p-4 rounded-2xl text-sm font-medium leading-relaxed ${c.user_id === user.id ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-500/10' : 'bg-slate-50 text-slate-700 rounded-tl-none border border-slate-100'}`}>
-                                                    {c.text}
+                                                <div className={`p-4 rounded-2xl text-sm font-medium leading-relaxed ${c?.user_id === user?.id ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-500/10' : 'bg-slate-50 text-slate-700 rounded-tl-none border border-slate-100'}`}>
+                                                    {c?.text}
                                                 </div>
                                             </div>
                                         </div>
@@ -248,8 +302,8 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                 />
                                 <button
                                     onClick={handleAddComment}
-                                    disabled={!newComment.trim()}
-                                    className="absolute right-3 bottom-3 p-3 bg-slate-900 text-white rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:scale-100 shadow-xl"
+                                    disabled={!newComment.trim() || isSubmitting}
+                                    className={`absolute right-3 bottom-3 p-3 bg-slate-900 text-white rounded-2xl transition-all shadow-xl ${isSubmitting || !newComment.trim() ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
                                 >
                                     <Send size={18} />
                                 </button>
@@ -261,7 +315,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                 {/* Action & Sidebar Panel */}
                 <div className="lg:col-span-4 space-y-6">
                     {/* Manager Action Block */}
-                    {isManager && p.status === PROJECT_STATUS.PENDING && (
+                    {isManager && p?.status === PROJECT_STATUS.PENDING && (
                         <div className="bg-white rounded-[2rem] shadow-2xl shadow-amber-500/10 border-t-8 border-amber-400 p-8 space-y-8 animate-fade-in">
                             <div className="flex items-center gap-4">
                                 <div className="bg-amber-50 p-3 rounded-2xl">
@@ -288,21 +342,24 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
 
                                 <div className="space-y-3">
                                     <button
-                                        onClick={() => onUpdateStatus(p.id, PROJECT_STATUS.ACTIVE, comment || 'Baseline Approved')}
-                                        className="w-full bg-emerald-600 text-white py-4 rounded-2xl hover:bg-emerald-700 font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                                        onClick={() => handleUpdateStatus(PROJECT_STATUS.ACTIVE, comment || 'Baseline Approved')}
+                                        disabled={isSubmitting}
+                                        className={`w-full bg-emerald-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-700 shadow-emerald-500/20 active:scale-95'}`}
                                     >
-                                        <CheckCircle2 size={18} /> Approve Baseline
+                                        <CheckCircle2 size={18} /> {isSubmitting ? 'Processing...' : 'Approve Baseline'}
                                     </button>
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
-                                            onClick={() => onUpdateStatus(p.id, PROJECT_STATUS.REWORK, comment || 'Rework requested')}
-                                            className="border border-slate-200 text-slate-700 bg-white py-3.5 rounded-2xl hover:bg-slate-50 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95"
+                                            onClick={() => handleUpdateStatus(PROJECT_STATUS.REWORK, comment || 'Rework requested')}
+                                            disabled={isSubmitting}
+                                            className={`border border-slate-200 text-slate-700 bg-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50 active:scale-95'}`}
                                         >
                                             Rework
                                         </button>
                                         <button
-                                            onClick={() => onUpdateStatus(p.id, PROJECT_STATUS.DECLINED, comment || 'Declined by reviewer')}
-                                            className="border border-red-100 text-red-500 bg-red-50 py-3.5 rounded-2xl hover:bg-red-100 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95"
+                                            onClick={() => handleUpdateStatus(PROJECT_STATUS.DECLINED, comment || 'Declined by reviewer')}
+                                            disabled={isSubmitting}
+                                            className={`border border-red-100 text-red-500 bg-red-50 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-100 active:scale-95'}`}
                                         >
                                             Decline
                                         </button>
@@ -313,7 +370,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                     )}
 
                     {/* Rework Resubmit Panel (B-02) */}
-                    {isOwner && p.status === PROJECT_STATUS.REWORK && (
+                    {isOwner && p?.status === PROJECT_STATUS.REWORK && (
                         <div className="bg-white rounded-[2rem] shadow-2xl shadow-orange-500/10 border-t-8 border-orange-400 p-8 space-y-6 animate-fade-in">
                             <div className="flex items-center gap-4">
                                 <div className="bg-orange-50 p-3 rounded-2xl">
@@ -335,7 +392,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                     )}
 
                     {/* Closure Tracking */}
-                    {isOwner && p.status === PROJECT_STATUS.ACTIVE && (
+                    {isOwner && p?.status === PROJECT_STATUS.ACTIVE && (
                         <div className="bg-white rounded-[2rem] shadow-2xl p-8 space-y-6 animate-fade-in border-t-8" style={{ borderTopColor: theme.accent, boxShadow: `0 20px 40px ${theme.accentShadow}` }}>
                             <div className="flex items-center gap-4">
                                 <div className="p-3 rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
@@ -377,18 +434,12 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                     {closureErrors.roi && <p className="text-[10px] text-red-500 font-bold ml-1">{closureErrors.roi}</p>}
                                 </div>
                                 <button
-                                    disabled={!closureData.investment || !closureData.roi}
-                                    onClick={() => {
-                                        const errs = {};
-                                        if (parseFloat(closureData.investment) < 0) errs.investment = 'Investment cannot be negative';
-                                        if (parseFloat(closureData.roi) < 0) errs.roi = 'ROI cannot be negative';
-                                        if (Object.keys(errs).length > 0) { setClosureErrors(errs); return; }
-                                        onCloseProject(p.id, closureData.investment, closureData.roi);
-                                    }}
-                                    className="w-full text-white py-4 rounded-2xl font-black disabled:opacity-50 transition-all active:scale-95 shadow-lg hover:opacity-90"
-                                    style={{ background: theme.badgeBg, boxShadow: `0 8px 24px ${theme.accentShadow}` }}
+                                    disabled={!closureData.investment || !closureData.roi || isSubmitting}
+                                    onClick={handleCloseProject}
+                                    className={`w-full text-white py-4 rounded-2xl font-black transition-all shadow-lg ${isSubmitting || (!closureData.investment || !closureData.roi) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90 active:scale-95'}`}
+                                    style={{ background: theme.badgeBg, boxShadow: isSubmitting ? 'none' : `0 8px 24px ${theme.accentShadow}` }}
                                 >
-                                    Finalize Record
+                                    {isSubmitting ? 'Finalizing...' : 'Finalize Record'}
                                 </button>
                             </div>
                         </div>
@@ -406,20 +457,20 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                 <div className="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
                                     {history.map((log, i) => (
                                         <div key={i} className="flex gap-5 relative opacity-100 group">
-                                            <div className={`mt-1.5 w-6 h-6 rounded-lg flex items-center justify-center shrink-0 z-10 transition-transform group-hover:scale-110 ${log.action === 'Approved' ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' :
-                                                log.action === 'Closed' ? 'bg-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 shadow-inner'
+                                            <div className={`mt-1.5 w-6 h-6 rounded-lg flex items-center justify-center shrink-0 z-10 transition-transform group-hover:scale-110 ${log?.action === 'Approved' ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' :
+                                                log?.action === 'Closed' ? 'bg-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 shadow-inner'
                                                 }`}>
-                                                {log.action === 'Approved' && <CheckCircle2 size={12} className="text-white" />}
-                                                {log.action === 'Closed' && <TrendingUp size={12} className="text-white" />}
-                                                {!['Approved', 'Closed'].includes(log.action) && <Clock size={12} className="text-slate-400" />}
+                                                {log?.action === 'Approved' && <CheckCircle2 size={12} className="text-white" />}
+                                                {log?.action === 'Closed' && <TrendingUp size={12} className="text-white" />}
+                                                {!['Approved', 'Closed'].includes(log?.action) && <Clock size={12} className="text-slate-400" />}
                                             </div>
                                             <div className="space-y-1.5 flex-1">
                                                 <div className="flex justify-between items-start">
-                                                    <p className="font-bold text-slate-900 text-[10px] uppercase tracking-wide">{log.action}</p>
-                                                    <p className="text-[10px] text-slate-400 font-semibold">{log.date}</p>
+                                                    <p className="font-bold text-slate-900 text-[10px] uppercase tracking-wide">{log?.action}</p>
+                                                    <p className="text-[10px] text-slate-400 font-semibold">{log?.date || '—'}</p>
                                                 </div>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em]">{log.user}</p>
-                                                {log.note && <p className="text-slate-600 mt-3 text-xs italic bg-slate-50/80 p-4 rounded-2xl border border-slate-100/50 leading-relaxed font-semibold">"{log.note}"</p>}
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em]">{log?.user || 'System'}</p>
+                                                {log?.note && <p className="text-slate-600 mt-3 text-xs italic bg-slate-50/80 p-4 rounded-2xl border border-slate-100/50 leading-relaxed font-semibold">"{log.note}"</p>}
                                             </div>
                                         </div>
                                     ))}

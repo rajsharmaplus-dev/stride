@@ -159,6 +159,7 @@ export function BulkActionBar({
   onSubmit,
   onReassign,
   theme, 
+  isLoading = false,
   showDelete = false,
   showApproval = false,
   showClosing = false,
@@ -186,20 +187,22 @@ export function BulkActionBar({
         <div className="flex items-center gap-2">
           <button 
             onClick={onExport}
+            disabled={isLoading}
             title="Export to CSV"
-            className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-white text-xs font-black uppercase tracking-wider transition-all"
+            className={`flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/5 rounded-xl text-white text-xs font-black uppercase tracking-wider transition-all ${isLoading ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10'}`}
           >
             <Download size={14} className="text-slate-400" />
-            Export
+            {isLoading ? 'Wait...' : 'Export'}
           </button>
           
           {showSubmit && (
             <button 
               onClick={onSubmit}
-              className="flex items-center gap-2 px-4 py-2.5 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/20 rounded-xl text-primary-400 text-xs font-black uppercase tracking-wider transition-all"
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-4 py-2.5 bg-primary-500/10 border border-primary-500/20 rounded-xl text-primary-400 text-xs font-black uppercase tracking-wider transition-all ${isLoading ? 'opacity-20 cursor-not-allowed' : 'hover:bg-primary-500/20'}`}
             >
               <Send size={14} />
-              Submit
+              {isLoading ? 'Submitting...' : 'Submit'}
             </button>
           )}
 
@@ -207,15 +210,17 @@ export function BulkActionBar({
             <>
               <button 
                 onClick={onApprove}
-                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs font-black uppercase tracking-wider transition-all"
+                disabled={isLoading}
+                className={`flex items-center gap-2 px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs font-black uppercase tracking-wider transition-all ${isLoading ? 'opacity-20 cursor-not-allowed' : 'hover:bg-emerald-500/20'}`}
               >
-                Approve
+                {isLoading ? 'Processing...' : 'Approve'}
               </button>
               <button 
                 onClick={onDecline}
-                className="flex items-center gap-2 px-4 py-2.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-xl text-orange-400 text-xs font-black uppercase tracking-wider transition-all"
+                disabled={isLoading}
+                className={`flex items-center gap-2 px-4 py-2.5 bg-orange-500/10 border border-orange-500/20 rounded-xl text-orange-400 text-xs font-black uppercase tracking-wider transition-all ${isLoading ? 'opacity-20 cursor-not-allowed' : 'hover:bg-orange-500/20'}`}
               >
-                Decline
+                {isLoading ? 'Wait...' : 'Decline'}
               </button>
             </>
           )}
@@ -223,29 +228,32 @@ export function BulkActionBar({
           {showReassign && (
             <button 
               onClick={onReassign}
-              className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-black uppercase tracking-wider transition-all"
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-4 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-black uppercase tracking-wider transition-all ${isLoading ? 'opacity-20 cursor-not-allowed' : 'hover:bg-amber-500/20'}`}
             >
               <UserPlus size={14} />
-              Reassign
+              {isLoading ? 'Reassigning...' : 'Reassign'}
             </button>
           )}
 
           {showClosing && (
             <button 
               onClick={onClose}
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl text-indigo-400 text-xs font-black uppercase tracking-wider transition-all"
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-4 py-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400 text-xs font-black uppercase tracking-wider transition-all ${isLoading ? 'opacity-20 cursor-not-allowed' : 'hover:bg-indigo-500/20'}`}
             >
-              Close
+              {isLoading ? 'Closing...' : 'Close'}
             </button>
           )}
           
           {showDelete && (
             <button 
               onClick={onDelete}
-              className="flex items-center gap-2 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-black uppercase tracking-wider transition-all group"
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-4 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-black uppercase tracking-wider transition-all group ${isLoading ? 'opacity-20 cursor-not-allowed' : 'hover:bg-rose-500/20'}`}
             >
               <X size={14} className="group-hover:scale-110 transition-transform" />
-              Delete
+              {isLoading ? 'Deleting...' : 'Delete'}
             </button>
           )}
         </div>

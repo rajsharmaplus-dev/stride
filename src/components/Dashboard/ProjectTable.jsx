@@ -1,34 +1,26 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ChevronRight, FileSpreadsheet, X, ArrowUpDown, Calendar, Tag, Edit2 } from 'lucide-react';
+import { Search, ChevronRight, FileSpreadsheet, X, ArrowUpDown, Calendar, Tag, Edit2, RefreshCw } from 'lucide-react';
 import { StatusBadge } from '../Common';
 import { formatCurrency } from '../../utils/format';
 
-export function ProjectTable({ projects, onSelectProject, onEditProject, onSelectionChange, selectedIds = [], theme, currentUser }) {
+export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject, onEditProject, onSelectionChange, selectedIds = [], theme, currentUser }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortKey, setSortKey] = useState(null);
     const [sortDir, setSortDir] = useState('asc');
 
-    const searchLower = searchTerm.toLowerCase();
     const filtered = useMemo(() => {
-        let result = searchTerm
-            ? projects.filter(p =>
-                (p.title || '').toLowerCase().includes(searchLower) ||
-                (p.process || '').toLowerCase().includes(searchLower) ||
-                (p.type || '').toLowerCase().includes(searchLower) ||
-                (p.methodology || '').toLowerCase().includes(searchLower) ||
-                (p.status || '').toLowerCase().includes(searchLower)
-            )
-            : [...projects];
-
-        if (sortKey) {
-            result.sort((a, b) => {
-                const av = sortKey === 'estimatedBenefit' ? (parseFloat(a[sortKey]) || 0) : (a[sortKey] || '');
-                const bv = sortKey === 'estimatedBenefit' ? (parseFloat(b[sortKey]) || 0) : (b[sortKey] || '');
-                return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
-            });
-        }
-        return result;
-    }, [projects, searchTerm, sortKey, sortDir, searchLower]);
+        const items = projects || [];
+        if (!searchTerm) return [...items];
+        
+        const searchLower = searchTerm.toLowerCase();
+        return items.filter(p =>
+            (p?.title || '').toLowerCase().includes(searchLower) ||
+            (p?.process || '').toLowerCase().includes(searchLower) ||
+            (p?.type || '').toLowerCase().includes(searchLower) ||
+            (p?.methodology || '').toLowerCase().includes(searchLower) ||
+            (p?.status || '').toLowerCase().includes(searchLower)
+        );
+    }, [projects, searchTerm]);
 
     const toggleSort = (key) => {
         if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -37,7 +29,7 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            const allIds = filtered.map(p => p.id);
+            const allIds = filtered.map(p => p?.id);
             onSelectionChange?.(allIds);
         } else {
             onSelectionChange?.([]);
@@ -66,7 +58,7 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
                     <div>
                         <h2 className="text-sm font-black text-slate-800 tracking-tight">Project Portfolio</h2>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                            {filtered.length} of {projects.length} records {selectedIds.length > 0 && `· ${selectedIds.length} selected`}
+                            {filtered.length} of {totalCount || projects?.length || 0} records {selectedIds.length > 0 && `· ${selectedIds.length} selected`}
                         </p>
                     </div>
                 </div>
@@ -129,12 +121,12 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
                     </thead>
                     <tbody className="divide-y divide-slate-50">
                         {filtered.map(project => {
-                            const isSelected = selectedIds.includes(project.id);
-                            const isOwner = project.submitterId === currentUser?.id;
+                            const isSelected = selectedIds.includes(project?.id);
+                            const isOwner = project?.submitterId === currentUser?.id;
 
                             return (
                                 <tr
-                                    key={project.id}
+                                    key={project?.id}
                                     className={`group transition-all duration-150 ${isSelected ? 'bg-slate-50/90' : 'hover:bg-slate-50/50'} cursor-pointer`}
                                     onClick={() => onSelectProject(project)}
                                 >
@@ -143,14 +135,14 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
                                             type="checkbox"
                                             className="w-4 h-4 rounded border-slate-300 focus:ring-offset-0 cursor-pointer transition-transform active:scale-90"
                                             checked={isSelected}
-                                            onChange={(e) => toggleSelect(e, project.id)}
+                                            onChange={(e) => toggleSelect(e, project?.id)}
                                             style={{ accentColor: theme?.accent }}
                                         />
                                     </td>
                                     <td className="px-4 py-4 max-w-xs">
                                         <div className="flex items-center gap-2">
                                             <p className="font-bold text-slate-900 text-sm truncate group-hover:text-slate-700 transition-colors">
-                                                {project.title || 'Untitled'}
+                                                {project?.title || 'Untitled'}
                                             </p>
                                             {isOwner && (
                                                 <button
@@ -164,32 +156,27 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
                                         </div>
                                         <div className="flex items-center gap-1.5 mt-1">
                                             <Tag size={9} className="text-slate-300" />
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{project.type || '—'}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{project?.type || '—'}</p>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-xs font-bold text-slate-700">{project.process || '—'}</p>
-                                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{project.methodology || '—'}</p>
+                                        <p className="text-xs font-bold text-slate-700">{project?.process || '—'}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{project?.methodology || '—'}</p>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <StatusBadge status={project.status} />
+                                        <StatusBadge status={project?.status} />
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-sm font-bold text-slate-900">{formatCurrency(project.estimatedBenefit)}</p>
+                                        <p className="text-sm font-bold text-slate-900">{formatCurrency(project?.estimatedBenefit)}</p>
                                         <div className="flex items-center gap-1 mt-0.5">
                                             <Calendar size={9} className="text-slate-300" />
-                                            <p className="text-[10px] text-slate-400 font-bold">{project.targetDate || '—'}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold">{project?.targetDate || '—'}</p>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div
-                                            className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-50 text-slate-400 transition-all duration-200 group-hover:scale-110 group-hover:text-white group-hover:shadow-sm"
-                                            style={{ ['--hover-bg']: theme?.accent }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme?.accent}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
-                                        >
-                                            <ChevronRight size={14} className="transition-colors" />
-                                        </div>
+                                        <button className="p-2 hover:bg-white hover:shadow-md rounded-lg text-slate-400 hover:text-indigo-600 transition-all group-hover:translate-x-1">
+                                            <ChevronRight size={16} />
+                                        </button>
                                     </td>
                                 </tr>
                             );
@@ -215,6 +202,20 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
                     </div>
                 )}
             </div>
+
+            {/* Pagination / Load More */}
+            {projects.length < totalCount && (
+                <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
+                    <button
+                        onClick={onLoadMore}
+                        className="group flex items-center gap-3 px-8 py-3 bg-white border border-slate-200 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:shadow-xl shadow-slate-200/50 transition-all active:scale-95"
+                    >
+                        <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                        Load More Results
+                        <span className="text-slate-300 lowercase font-bold tracking-tight">({projects.length} of {totalCount})</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

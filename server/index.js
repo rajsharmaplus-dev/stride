@@ -85,15 +85,15 @@ function authorize(allowedRoles = []) {
 // ------------------------------------
 
 app.get('/api/projects', authorize(), (req, res) => {
-    let { limit = 100, offset = 0 } = req.query;
+    let { limit = 20, offset = 0 } = req.query; // Reduced default limit for testing pagination
     limit = parseInt(limit);
     offset = parseInt(offset);
 
     try {
+        const total = db.prepare('SELECT COUNT(*) as count FROM projects').get().count;
         const projects = db.prepare('SELECT * FROM projects LIMIT ? OFFSET ?').all(limit, offset);
-        const logs = db.prepare('SELECT * FROM audit_log').all(); // Still unbounded, but audit_log is smaller per-request
+        const logs = db.prepare('SELECT * FROM audit_log').all();
 
-        // Group logs by project_id
         const projectsWithLogs = projects.map(p => ({
             ...p,
             estimatedBenefit: Number(p.estimated_benefit),
@@ -109,7 +109,7 @@ app.get('/api/projects', authorize(), (req, res) => {
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
         }));
 
-        res.json(projectsWithLogs);
+        res.json({ items: projectsWithLogs, total });
     } catch (error) {
         console.error('Error fetching projects:', error);
         res.status(500).json({ error: 'Database error' });
@@ -310,8 +310,8 @@ app.post('/api/projects/batch-update', authorize(['Manager', 'Admin']), (req, re
 });
 
 
-// GET all users
-app.get('/api/users', authorize(), (req, res) => {
+// GET all users (Open access for initial identity selection)
+app.get('/api/users', (req, res) => {
     try {
         const users = db.prepare('SELECT * FROM users').all();
         res.json(users);

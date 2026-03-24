@@ -22,7 +22,7 @@ const VIEW_CONTEXT = {
     },
 };
 
-export function Dashboard({ user, stats, projects, onSelectProject, onEditProject, onCardClick, onSelectionChange, selectedIds, setView, viewContext }) {
+export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSelectProject, onEditProject, onCardClick, onSelectionChange, selectedIds, setView, viewContext }) {
     const theme = ROLE_THEME[user?.role] || ROLE_THEME['Employee'];
     const ctx = VIEW_CONTEXT[viewContext] || ROLE_GREETINGS[user?.role] || ROLE_GREETINGS['Employee'];
     const hour = new Date().getHours();
@@ -34,15 +34,15 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
                     {!isSubView && (
-                        <p className="text-xs font-bold uppercase tracking-[0.2em] mb-1" style={{ color: theme.accent }}>
-                            {greeting}, {user?.name?.split(' ')[0]}
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] mb-1" style={{ color: theme?.accent }}>
+                            {greeting}, {user?.name?.split(' ')[0] || 'User'}
                         </p>
                     )}
                     <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                        {isSubView ? ctx.label : ctx.label}
+                        {isSubView ? ctx?.label : ctx?.label}
                     </h1>
                     <p className="text-sm text-slate-400 font-medium mt-1.5">
-                        {typeof ctx.sub === 'function' ? ctx.sub(projects.length) : ctx.sub}
+                        {typeof ctx?.sub === 'function' ? ctx.sub(projects?.length || 0) : (ctx?.sub || '—')}
                     </p>
                 </div>
                 </div>
@@ -51,7 +51,7 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard
                     title="Total Initiatives"
-                    value={stats.total}
+                    value={stats?.total || 0}
                     icon={<LayoutDashboard size={20} />}
                     theme={theme}
                     color="default"
@@ -59,7 +59,7 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                 />
                 <StatCard
                     title="Active Projects"
-                    value={stats.active}
+                    value={stats?.active || 0}
                     icon={<TrendingUp size={20} />}
                     theme={theme}
                     color="emerald"
@@ -67,16 +67,16 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                 />
                 <StatCard
                     title="Needs Review"
-                    value={stats.pending}
+                    value={stats?.pending || 0}
                     icon={<AlertCircle size={20} />}
-                    highlight={stats.pending > 0}
+                    highlight={(stats?.pending || 0) > 0}
                     theme={theme}
                     color="amber"
                     onClick={() => onCardClick?.('review')}
                 />
                 <StatCard
                     title="Realized ROI"
-                    value={formatCurrency(stats.roi)}
+                    value={formatCurrency(stats?.roi)}
                     icon={<DollarSign size={20} />}
                     theme={theme}
                     color="accent"
@@ -85,6 +85,8 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
 
             <ProjectTable 
                 projects={projects} 
+                totalCount={totalCount}
+                onLoadMore={onLoadMore}
                 onSelectProject={onSelectProject} 
                 onEditProject={onEditProject}
                 onSelectionChange={onSelectionChange}
