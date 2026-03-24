@@ -336,6 +336,7 @@ export default function App() {
               onSelectProject={handleSelectProject}
               onEditProject={handleEditProject}
               onCardClick={(v) => setView(v)}
+              setView={setView}
               onSelectionChange={setSelectedIds}
               selectedIds={selectedIds}
               viewContext={null}

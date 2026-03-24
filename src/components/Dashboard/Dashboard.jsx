@@ -45,18 +45,7 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                         {typeof ctx.sub === 'function' ? ctx.sub(projects.length) : ctx.sub}
                     </p>
                 </div>
-                {user?.role === 'Employee' && (
-                    <button
-                        onClick={() => setView('submit')}
-                        className="group flex items-center gap-2.5 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95"
-                        style={{ background: theme.badgeBg, boxShadow: `0 8px 24px ${theme.accentShadow}` }}
-                    >
-                        <PlusCircle size={16} />
-                        <span>Launch Initiative</span>
-                        <ArrowUpRight size={14} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </button>
-                )}
-            </div>
+                </div>
 
             {/* Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -94,7 +83,6 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                 />
             </div>
 
-            {/* Project Table */}
             <ProjectTable 
                 projects={projects} 
                 onSelectProject={onSelectProject} 
@@ -104,6 +92,23 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                 theme={theme} 
                 currentUser={user}
             />
+
+            {/* Floating Action Button for Employees */}
+            {user?.role === 'Employee' && !viewContext && (
+                <button
+                    onClick={() => setView('submit')}
+                    className="fixed bottom-8 right-8 z-[60] group flex items-center gap-3 bg-slate-900 text-white pl-5 pr-6 py-4 rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 animate-slide-up"
+                    style={{ 
+                        background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}dd)`,
+                        boxShadow: `0 12px 32px ${theme.accentShadow}`
+                    }}
+                >
+                    <div className="bg-white/20 p-1.5 rounded-xl group-hover:rotate-90 transition-transform duration-500">
+                        <PlusCircle size={18} />
+                    </div>
+                    <span>Launch Initiative</span>
+                </button>
+            )}
         </div>
     );
 }
