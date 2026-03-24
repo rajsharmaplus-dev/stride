@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     ArrowLeft,
     Lock,
@@ -34,20 +34,20 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
     const [newComment, setNewComment] = useState('');
     const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-    useEffect(() => {
-        if (p?.id) {
-            loadComments();
-        }
-    }, [p?.id]);
-
-    const loadComments = async () => {
+    const loadComments = useCallback(async () => {
         setIsLoadingComments(true);
         if (typeof fetchComments === 'function') {
             const data = await fetchComments(p.id);
             setComments(data);
         }
         setIsLoadingComments(false);
-    };
+    }, [p.id, fetchComments]);
+
+    useEffect(() => {
+        if (p?.id) {
+            loadComments();
+        }
+    }, [p?.id, loadComments]);
 
     const handleAddComment = async () => {
         if (!newComment.trim()) return;

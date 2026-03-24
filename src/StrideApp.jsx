@@ -24,6 +24,8 @@ export default function App() {
     closeProject,
     deleteProjects,
     batchUpdateStatus,
+    fetchComments,
+    addComment,
     loading
   } = useProjectData();
 
