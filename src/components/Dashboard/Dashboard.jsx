@@ -92,23 +92,6 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                 theme={theme} 
                 currentUser={user}
             />
-
-            {/* Floating Action Button for Employees */}
-            {user?.role === 'Employee' && !viewContext && (
-                <button
-                    onClick={() => setView('submit')}
-                    className="fixed bottom-8 right-8 z-[60] group flex items-center gap-3 bg-slate-900 text-white pl-5 pr-6 py-4 rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 animate-slide-up"
-                    style={{ 
-                        background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}dd)`,
-                        boxShadow: `0 12px 32px ${theme.accentShadow}`
-                    }}
-                >
-                    <div className="bg-white/20 p-1.5 rounded-xl group-hover:rotate-90 transition-transform duration-500">
-                        <PlusCircle size={18} />
-                    </div>
-                    <span>Launch Initiative</span>
-                </button>
-            )}
         </div>
     );
 }
