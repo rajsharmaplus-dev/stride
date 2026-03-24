@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft,
     Lock,
@@ -15,7 +15,9 @@ import {
     MessageSquare,
     Target,
     DollarSign,
-    RefreshCw
+    RefreshCw,
+    Printer,
+    Send
 } from 'lucide-react';
 
 
@@ -24,10 +26,43 @@ import { formatCurrency } from '../../utils/format';
 import { PROJECT_STATUS, ROLE_THEME } from '../../constants/projectConstants';
 import { MOCK_USERS } from '../../data/mockData';
 
-export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateStatus, onCloseProject, onEditAndResubmit }) {
+export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateStatus, onCloseProject, onEditAndResubmit, fetchComments, addComment }) {
     const [comment, setComment] = useState('');
     const [closureData, setClosureData] = useState({ investment: '', roi: '' });
     const [closureErrors, setClosureErrors] = useState({});
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [isLoadingComments, setIsLoadingComments] = useState(false);
+
+    useEffect(() => {
+        if (p?.id) {
+            loadComments();
+        }
+    }, [p?.id]);
+
+    const loadComments = async () => {
+        setIsLoadingComments(true);
+        if (typeof fetchComments === 'function') {
+            const data = await fetchComments(p.id);
+            setComments(data);
+        }
+        setIsLoadingComments(false);
+    };
+
+    const handleAddComment = async () => {
+        if (!newComment.trim()) return;
+        if (typeof addComment === 'function') {
+            const success = await addComment(p.id, newComment);
+            if (success) {
+                setNewComment('');
+                loadComments();
+            }
+        }
+    };
+
+    const handlePrint = () => {
+        window.print();
+    };
 
     if (!p) return null;
 
@@ -62,11 +97,19 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                     <StatusBadge status={p.status} />
                                     <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">REF: {p.id.toUpperCase()}</span>
                                 </div>
-                                {isLocked && (
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                        <Lock size={12} /> Read-Only Record
-                                    </div>
-                                )}
+                                <div className="flex items-center gap-3">
+                                    {isLocked && (
+                                        <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest no-print">
+                                            <Lock size={12} /> Read-Only
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={handlePrint}
+                                        className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-lg no-print"
+                                    >
+                                        <Printer size={14} /> Export Charter
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="space-y-4">
@@ -156,10 +199,62 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                 </div>
                                 <a href={p.docLink} target="_blank" rel="noreferrer" className="btn-secondary py-2 flex items-center gap-2">
                                     <ExternalLink size={14} />
-                                    <span className="text-xs">Project Hub</span>
                                 </a>
                             </footer>
                         )}
+
+                        {/* Phase 4: Threaded Comments */}
+                        <section className="border-t border-slate-100 pt-12 space-y-8 no-print">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <MessageSquare size={14} /> Collaboration Thread
+                                </h3>
+                                <span className="text-[10px] font-bold text-slate-400">{comments.length} Messages</span>
+                            </div>
+
+                            <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                                {comments.length > 0 ? (
+                                    comments.map((c, i) => (
+                                        <div key={i} className={`flex gap-4 ${c.user_id === user.id ? 'flex-row-reverse' : ''}`}>
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${c.user_id === user.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                                {c.user_name.charAt(0)}
+                                            </div>
+                                            <div className={`space-y-1.5 max-w-[80%] ${c.user_id === user.id ? 'items-end' : ''}`}>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight">{c.user_name}</span>
+                                                    <span className="text-[9px] text-slate-300 font-bold">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
+                                                <div className={`p-4 rounded-2xl text-sm font-medium leading-relaxed ${c.user_id === user.id ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-500/10' : 'bg-slate-50 text-slate-700 rounded-tl-none border border-slate-100'}`}>
+                                                    {c.text}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="py-12 text-center space-y-3 opacity-30">
+                                        <MessageSquare size={32} className="mx-auto" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest">Start the conversation</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="relative group">
+                                <textarea
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-6 pr-16 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:bg-white focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300 resize-none font-medium h-24"
+                                    placeholder="Add a comment or mention @team..."
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAddComment(); } }}
+                                />
+                                <button
+                                    onClick={handleAddComment}
+                                    disabled={!newComment.trim()}
+                                    className="absolute right-3 bottom-3 p-3 bg-slate-900 text-white rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:scale-100 shadow-xl"
+                                >
+                                    <Send size={18} />
+                                </button>
+                            </div>
+                        </section>
                     </div>
                 </div>
 

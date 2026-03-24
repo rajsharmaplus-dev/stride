@@ -217,6 +217,31 @@ export function useProjectData() {
         }
     };
 
+    const fetchComments = async (projectId) => {
+        try {
+            return await fetchApi(`/projects/${projectId}/comments`);
+        } catch (error) {
+            return [];
+        }
+    };
+
+    const addComment = async (projectId, text) => {
+        try {
+            await fetchApi('/comments', {
+                method: 'POST',
+                body: JSON.stringify({
+                    projectId,
+                    userId: user.id,
+                    userName: user.name,
+                    text
+                })
+            });
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
+
     return {
         user: user || { name: 'Loading...', role: 'Employee' },
         projects,
@@ -229,6 +254,8 @@ export function useProjectData() {
         closeProject,
         deleteProjects,
         batchUpdateStatus,
-        batchUpdateProjects
+        batchUpdateProjects,
+        fetchComments,
+        addComment
     };
 }

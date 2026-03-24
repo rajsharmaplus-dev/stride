@@ -272,6 +272,39 @@ app.get('/api/users', (req, res) => {
     }
 });
 
+// --- Phase 4: Collaboration (Comments) ---
+
+// GET comments for a project
+app.get('/api/projects/:id/comments', (req, res) => {
+    const { id } = req.params;
+    try {
+        const comments = db.prepare('SELECT * FROM comments WHERE project_id = ? ORDER BY timestamp ASC').all(id);
+        res.json(comments);
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// POST a new comment
+app.post('/api/comments', (req, res) => {
+    const { projectId, userId, userName, text } = req.body;
+    if (!projectId || !userId || !text) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const sanitizedText = sanitize(text);
+        const timestamp = new Date().toISOString();
+        const insertComment = db.prepare('INSERT INTO comments (project_id, user_id, user_name, text, timestamp) VALUES (?, ?, ?, ?, ?)');
+        insertComment.run(projectId, userId, userName, sanitizedText, timestamp);
+        res.status(201).json({ message: 'Comment added' });
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Backend server running at http://0.0.0.0:${PORT}`);
 });

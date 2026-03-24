@@ -401,6 +401,8 @@ export default function App() {
               onUpdateStatus={handleUpdateStatus}
               onCloseProject={handleCloseProject}
               onEditAndResubmit={handleEditAndResubmit}
+              fetchComments={fetchComments}
+              addComment={addComment}
             />
           )}
         </div>

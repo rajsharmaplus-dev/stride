@@ -48,6 +48,16 @@ db.exec(`
         note TEXT,
         FOREIGN KEY (project_id) REFERENCES projects(id)
     );
+
+    CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        user_name TEXT NOT NULL,
+        text TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        FOREIGN KEY (project_id) REFERENCES projects(id)
+    );
 `);
 
 // Mock Data

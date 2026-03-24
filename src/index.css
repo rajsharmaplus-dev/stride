@@ -85,3 +85,59 @@
     transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1),
                 box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* Formal Project Charter Print Layout */
+@media print {
+    .no-print, 
+    button, 
+    nav, 
+    aside,
+    .fixed,
+    .absolute.right-\[-10px\] {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .max-w-7xl {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 2rem !important;
+    }
+
+    .bg-white {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .grid {
+        display: block !important;
+    }
+
+    .lg\:col-span-8, 
+    .lg\:col-span-4 {
+        width: 100% !important;
+        margin-bottom: 2rem !important;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    h2 {
+        font-size: 28pt !important;
+        color: #0f172a !important;
+    }
+
+    .text-4xl {
+        font-size: 28pt !important;
+    }
+
+    section, .p-10 {
+        page-break-inside: avoid;
+    }
+}
