@@ -177,6 +177,44 @@ app.post('/api/projects/batch-update-status', (req, res) => {
     }
 });
 
+// POST generic batch update
+app.post('/api/projects/batch-update', (req, res) => {
+    const { ids, updates, user, action, note } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0 || !updates || typeof updates !== 'object') {
+        return res.status(400).json({ error: 'Invalid input' });
+    }
+
+    try {
+        db.transaction(() => {
+            const fields = Object.keys(updates);
+            if (fields.length === 0) return;
+
+            // Security: Whitelist allowed fields for bulk update
+            const allowedFields = ['status', 'manager_id', 'process', 'type', 'methodology'];
+            const validFields = fields.filter(f => allowedFields.includes(f));
+            
+            if (validFields.length === 0) throw new Error('No valid fields provided for update');
+
+            const setClause = validFields.map(field => `${field} = ?`).join(', ');
+            const values = validFields.map(f => updates[f]);
+            
+            const updateStmt = db.prepare(`UPDATE projects SET ${setClause} WHERE id = ?`);
+            const insertAudit = db.prepare('INSERT INTO audit_log (project_id, date, user, action, note) VALUES (?, ?, ?, ?, ?)');
+            const date = new Date().toISOString().split('T')[0];
+
+            for (const id of ids) {
+                updateStmt.run(...values, id);
+                insertAudit.run(id, date, user, action || 'Bulk Update', note || `Updated: ${validFields.join(', ')}`);
+            }
+        })();
+        res.json({ message: `${ids.length} projects updated` });
+    } catch (error) {
+        console.error('Error in batch update:', error);
+        res.status(500).json({ error: error.message || 'Database error' });
+    }
+});
+
+
 // GET all users
 app.get('/api/users', (req, res) => {
     try {

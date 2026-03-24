@@ -113,7 +113,10 @@ export default function App() {
 
   const handleBulkDelete = async () => {
     const eligibleIds = selectedProjects
-      .filter(p => (user?.role === 'Manager' || user?.role === 'Admin') || (p.submitterId === user?.id && (p.status === PROJECT_STATUS.DRAFT || p.status === PROJECT_STATUS.PENDING)))
+      .filter(p => 
+        (user?.role === 'Manager' || user?.role === 'Admin') || 
+        (p.submitterId === user?.id && (p.status === PROJECT_STATUS.DRAFT || p.status === PROJECT_STATUS.PENDING || p.status === PROJECT_STATUS.REWORK))
+      )
       .map(p => p.id);
 
     if (eligibleIds.length === 0) return;
@@ -157,22 +160,66 @@ export default function App() {
     }
   };
 
+  const handleBulkSubmit = async () => {
+    const eligibleIds = selectedProjects
+      .filter(p => p.submitterId === user?.id && p.status === PROJECT_STATUS.DRAFT)
+      .map(p => p.id);
+
+    if (eligibleIds.length > 0) {
+      await batchUpdateStatus(eligibleIds, PROJECT_STATUS.PENDING, 'Bulk submission from dashboard');
+      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+    }
+  };
+
+  const handleBulkAssign = async () => {
+    if (user?.role !== 'Manager' && user?.role !== 'Admin') return;
+    
+    // Simple POC: prompt for manager ID
+    const managerList = users
+      .filter(u => u.role === 'Manager' || u.role === 'Admin')
+      .map(u => `${u.name} (ID: ${u.id})`)
+      .join('\n');
+      
+    const newManagerId = window.prompt(`Select new reviewer ID:\n\n${managerList}`);
+    
+    if (newManagerId && users.some(u => u.id === newManagerId)) {
+      await batchUpdateProjects(selectedIds, { manager_id: newManagerId }, 'Reassign', `Bulk reassigned to ${newManagerId}`);
+      setSelectedIds([]);
+    }
+  };
+
+
+
   // Determine which bulk actions to show based on user role and selection
   const selectedProjects = useMemo(() => 
     projects.filter(p => selectedIds.includes(p.id)),
     [projects, selectedIds]
   );
 
+  const hasDraft = selectedProjects.some(p => p.status === PROJECT_STATUS.DRAFT);
   const hasPending = selectedProjects.some(p => p.status === PROJECT_STATUS.PENDING);
   const hasActive = selectedProjects.some(p => p.status === PROJECT_STATUS.ACTIVE);
-  const hasDraftOrPending = selectedProjects.some(p => p.status === PROJECT_STATUS.DRAFT || p.status === PROJECT_STATUS.PENDING);
+  const hasRework = selectedProjects.some(p => p.status === PROJECT_STATUS.REWORK);
+  
+  // A project is deletable if it is Draft, Pending, or Rework (not Active/Closed)
+  const allDeletableStatus = selectedProjects.every(p => 
+    p.status === PROJECT_STATUS.DRAFT || 
+    p.status === PROJECT_STATUS.PENDING || 
+    p.status === PROJECT_STATUS.REWORK
+  );
 
+  const canSubmit = hasDraft && selectedProjects.every(p => p.submitterId === user?.id || user?.role === 'Admin');
   const canApprove = (user?.role === 'Manager' || user?.role === 'Admin') && hasPending;
   
+  // Managers/Admins can delete anything selected. 
+  // Employees can delete projects they OWN if they are in a "pre-execution" state (Draft/Pending/Rework).
   const canDelete = (user?.role === 'Manager' || user?.role === 'Admin') || 
-                    (hasDraftOrPending && selectedProjects.some(p => p.submitterId === user?.id));
+                    (allDeletableStatus && selectedProjects.every(p => p.submitterId === user?.id));
 
-  const canClose = hasActive && selectedProjects.some(p => p.submitterId === user?.id);
+  const canClose = hasActive && 
+                   selectedProjects.every(p => p.submitterId === user?.id || user?.role === 'Admin');
+
+  const canReassign = (user?.role === 'Manager' || user?.role === 'Admin');
 
 
   if (loading) {
@@ -258,6 +305,8 @@ export default function App() {
               onSelectProject={handleSelectProject}
               setView={setView}
               onCardClick={(v) => setView(v)}
+              onSelectionChange={setSelectedIds}
+              selectedIds={selectedIds}
               viewContext="review"
             />
           )}
@@ -270,6 +319,8 @@ export default function App() {
               onSelectProject={handleSelectProject}
               setView={setView}
               onCardClick={(v) => setView(v)}
+              onSelectionChange={setSelectedIds}
+              selectedIds={selectedIds}
               viewContext="closure"
             />
           )}
@@ -315,10 +366,14 @@ export default function App() {
         onApprove={handleBulkApprove}
         onDecline={handleBulkDecline}
         onClose={handleBulkClose}
+        onSubmit={handleBulkSubmit}
+        onReassign={handleBulkAssign}
         theme={theme}
         showDelete={canDelete}
         showApproval={canApprove}
         showClosing={canClose}
+        showSubmit={canSubmit}
+        showReassign={canReassign}
       />
     </div>
   );

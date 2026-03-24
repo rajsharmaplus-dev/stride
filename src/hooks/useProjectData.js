@@ -178,6 +178,25 @@ export function useProjectData() {
         }
     };
 
+    const batchUpdateProjects = async (ids, updates, action, note) => {
+        try {
+            await fetch(`${API_BASE}/projects/batch-update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ids,
+                    updates,
+                    user: user.name,
+                    action,
+                    note: note || `Bulk update: ${Object.keys(updates).join(', ')}`
+                })
+            });
+            await fetchData();
+        } catch (error) {
+            console.error('Failed to batch update projects:', error);
+        }
+    };
+
     return {
         user: user || { name: 'Loading...', role: 'Employee' },
         projects,
@@ -189,6 +208,7 @@ export function useProjectData() {
         updateProjectStatus,
         closeProject,
         deleteProjects,
-        batchUpdateStatus
+        batchUpdateStatus,
+        batchUpdateProjects
     };
 }

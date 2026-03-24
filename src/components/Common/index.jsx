@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, X } from 'lucide-react';
+import { Download, X, Send, UserPlus, Edit3 } from 'lucide-react';
 import { PROJECT_STATUS } from '../../constants/projectConstants';
 
 const STATUS_STYLES = {
@@ -156,10 +156,14 @@ export function BulkActionBar({
   onApprove, 
   onDecline, 
   onClose,
+  onSubmit,
+  onReassign,
   theme, 
   showDelete = false,
   showApproval = false,
-  showClosing = false
+  showClosing = false,
+  showSubmit = false,
+  showReassign = false
 }) {
   if (count === 0) return null;
 
@@ -189,6 +193,16 @@ export function BulkActionBar({
             Export
           </button>
           
+          {showSubmit && (
+            <button 
+              onClick={onSubmit}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/20 rounded-xl text-primary-400 text-xs font-black uppercase tracking-wider transition-all"
+            >
+              <Send size={14} />
+              Submit
+            </button>
+          )}
+
           {showApproval && (
             <>
               <button 
@@ -204,6 +218,16 @@ export function BulkActionBar({
                 Decline
               </button>
             </>
+          )}
+
+          {showReassign && (
+            <button 
+              onClick={onReassign}
+              className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-black uppercase tracking-wider transition-all"
+            >
+              <UserPlus size={14} />
+              Reassign
+            </button>
           )}
 
           {showClosing && (

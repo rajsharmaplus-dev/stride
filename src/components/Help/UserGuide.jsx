@@ -152,8 +152,36 @@ export function UserGuide() {
                     />
                     <FeatureBox 
                         title="Multi-Project Actions" 
-                        desc="Delete drafts or close active projects in bulk by selecting them on the dashboard." 
+                        desc="Submit, reassign, or delete initiatives in bulk by selecting them on the dashboard." 
                     />
+                </div>
+            </section>
+
+            <section className="bg-red-50/50 rounded-[2.5rem] p-10 border border-red-100/60">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-500/20">
+                        <ShieldCheck size={20} />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Governance Guardrails: Deleting Records</h3>
+                </div>
+                <div className="space-y-4">
+                    <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                        To maintain a secure and compliant audit trail, the <strong>Delete</strong> operation is restricted for regular users to prevent accidental data loss:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl border border-red-100 shadow-sm">
+                            <p className="font-black text-[10px] uppercase tracking-[0.2em] text-red-600 mb-2">Rule 1: Pre-Execution Only</p>
+                            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                Submitters can only delete projects in <strong>Draft</strong>, <strong>Pending Approval</strong>, or <strong>Pending Rework</strong> status.
+                            </p>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl border border-red-100 shadow-sm">
+                            <p className="font-black text-[10px] uppercase tracking-[0.2em] text-red-600 mb-2">Rule 2: Full Ownership</p>
+                            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                You must be the original submitter of every selected record. Bulk delete hides if any selected project is Active or Owned by someone else.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -169,7 +197,7 @@ export function UserGuide() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-primary-200 text-[10px] font-black text-primary-600 uppercase tracking-widest">
-                    Version 1.2 Enhanced
+                    Version 1.3 Governance Edition
                 </div>
             </footer>
         </div>
