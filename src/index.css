@@ -14,13 +14,13 @@
     --color-surface-100: #f1f5f9;
     --color-surface-200: #e2e8f0;
 
-    --font-sans: 'Outfit', 'Inter', system-ui, sans-serif;
+    --font-sans: 'Inter', 'Outfit', system-ui, sans-serif;
 }
 
 @layer base {
     body {
-        @apply bg-surface-50 text-slate-900 antialiased;
-        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        @apply bg-surface-50 text-slate-900 antialiased tracking-tight;
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
     }
 }
 

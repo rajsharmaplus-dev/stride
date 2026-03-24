@@ -38,7 +38,7 @@ export function Dashboard({ user, stats, projects, onSelectProject, onEditProjec
                             {greeting}, {user?.name?.split(' ')[0]}
                         </p>
                     )}
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                    <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
                         {isSubView ? ctx.label : ctx.label}
                     </h1>
                     <p className="text-sm text-slate-400 font-medium mt-1.5">

@@ -110,19 +110,19 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
                                     />
                                 </div>
                             </th>
-                            <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                                 <SortBtn label="Initiative" k="title" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                                 <SortBtn label="Governance" k="process" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                                 <SortBtn label="Status" k="status" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                                 <SortBtn label="Est. Value" k="estimatedBenefit" sortKey={sortKey} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">
+                            <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">
                                 Actions
                             </th>
                         </tr>
@@ -175,7 +175,7 @@ export function ProjectTable({ projects, onSelectProject, onEditProject, onSelec
                                         <StatusBadge status={project.status} />
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-sm font-black text-slate-900">{formatCurrency(project.estimatedBenefit)}</p>
+                                        <p className="text-sm font-bold text-slate-900">{formatCurrency(project.estimatedBenefit)}</p>
                                         <div className="flex items-center gap-1 mt-0.5">
                                             <Calendar size={9} className="text-slate-300" />
                                             <p className="text-[10px] text-slate-400 font-bold">{project.targetDate || '—'}</p>

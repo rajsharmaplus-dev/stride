@@ -113,15 +113,15 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                             </div>
 
                             <div className="space-y-4">
-                                <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">{p.title}</h2>
+                                <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">{p.title}</h2>
                                 <div className="flex flex-wrap items-center gap-6">
                                     <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary-500">
                                             <User size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Lead Submitter</p>
-                                            <p className="text-sm font-bold text-slate-800">{submitterName}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] leading-none mb-1">Lead Submitter</p>
+                                            <p className="text-sm font-semibold text-slate-800">{submitterName}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -206,10 +206,10 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                         {/* Phase 4: Threaded Comments */}
                         <section className="border-t border-slate-100 pt-12 space-y-8 no-print">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.15em] flex items-center gap-2">
                                     <MessageSquare size={14} /> Collaboration Thread
                                 </h3>
-                                <span className="text-[10px] font-bold text-slate-400">{comments.length} Messages</span>
+                                <span className="text-[10px] font-semibold text-slate-400">{comments.length} Messages</span>
                             </div>
 
                             <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
@@ -397,7 +397,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                     {/* Audit Trail */}
                     <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
                         <div className="bg-slate-50/50 px-8 py-5 border-b border-slate-100 text-center">
-                            <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                            <h3 className="font-bold text-slate-800 text-[10px] uppercase tracking-[0.15em] flex items-center justify-center gap-2">
                                 <History size={14} className="text-slate-400" /> System Governance Log
                             </h3>
                         </div>
@@ -415,11 +415,11 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                             </div>
                                             <div className="space-y-1.5 flex-1">
                                                 <div className="flex justify-between items-start">
-                                                    <p className="font-black text-slate-900 text-[10px] uppercase tracking-wide">{log.action}</p>
-                                                    <p className="text-[10px] text-slate-400 font-bold">{log.date}</p>
+                                                    <p className="font-bold text-slate-900 text-[10px] uppercase tracking-wide">{log.action}</p>
+                                                    <p className="text-[10px] text-slate-400 font-semibold">{log.date}</p>
                                                 </div>
-                                                <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{log.user}</p>
-                                                {log.note && <p className="text-slate-600 mt-3 text-xs italic bg-slate-50/80 p-4 rounded-2xl border border-slate-100/50 leading-relaxed font-medium">"{log.note}"</p>}
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em]">{log.user}</p>
+                                                {log.note && <p className="text-slate-600 mt-3 text-xs italic bg-slate-50/80 p-4 rounded-2xl border border-slate-100/50 leading-relaxed font-semibold">"{log.note}"</p>}
                                             </div>
                                         </div>
                                     ))}
@@ -429,7 +429,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                     <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center">
                                         <Clock size={20} className="text-slate-300" />
                                     </div>
-                                    <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest leading-tight">Awaiting Governance<br />Actions</p>
+                                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.15em] leading-tight text-center">Awaiting Governance<br />Actions</p>
                                 </div>
                             )}
                         </div>

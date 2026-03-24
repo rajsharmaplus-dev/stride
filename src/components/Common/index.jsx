@@ -78,7 +78,7 @@ export function StatCard({ title, value, icon, highlight, theme, color = 'defaul
             )}
 
             <div className="flex items-start justify-between mb-4">
-                <p className={`text-[10px] font-black uppercase tracking-widest ${isAccent ? 'text-white/60' : 'text-slate-400'}`}>{title}</p>
+                <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${isAccent ? 'text-white/60' : 'text-slate-400'}`}>{title}</p>
                 <div
                     className={`p-2.5 rounded-xl ${c.iconBg || ''}`}
                     style={isAccent ? { backgroundColor: 'rgba(255,255,255,0.15)' } : highlight ? { backgroundColor: `${theme?.accentMuted}` } : {}}
@@ -89,12 +89,12 @@ export function StatCard({ title, value, icon, highlight, theme, color = 'defaul
                 </div>
             </div>
 
-            <p className={`text-3xl font-black tracking-tight ${isAccent ? 'text-white' : c.valueShadow}`}>
+            <p className={`text-3xl font-extrabold tracking-tight ${isAccent ? 'text-white' : c.valueShadow}`}>
                 {value}
             </p>
 
             {trend && (
-                <p className={`text-[10px] font-bold mt-1.5 ${isAccent ? 'text-white/50' : 'text-slate-400'}`}>{trend}</p>
+                <p className={`text-[10px] font-semibold mt-1.5 ${isAccent ? 'text-white/50' : 'text-slate-400'}`}>{trend}</p>
             )}
 
         </div>
@@ -138,12 +138,12 @@ export function NavItem({ icon, label, active, onClick, count, theme }) {
 
 export function DetailItem({ label, value, icon: Icon }) {
     return (
-        <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 opacity-40 text-[10px] uppercase font-black tracking-widest">
-                {Icon && <Icon size={10} />}
-                <span>{label}</span>
+        <div className="space-y-2">
+            <div className="flex items-center gap-2">
+                {Icon && <Icon size={12} className="text-slate-400" />}
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{label}</span>
             </div>
-            <p className="text-sm font-bold text-slate-800">{value || <span className="text-slate-300 italic font-medium">Not specified</span>}</p>
+            <p className="text-sm font-semibold text-slate-800 leading-tight">{value || '—'}</p>
         </div>
     );
 }
