@@ -3,13 +3,38 @@ import cors from 'cors';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import xss from 'xss';
+import rateLimit from 'express-rate-limit';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, '../stride.db');
 const db = new Database(dbPath);
 
 const app = express();
-app.use(cors());
+
+// --- Production Security Middleware ---
+// 1. Specific CORS for Production (Adjust as needed for GCP)
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'];
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS blocked: Origin not allowed'));
+        }
+    }
+}));
+
+// 2. Global Rate Limiting to prevent DoS/Brute Force
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+});
+
+app.use('/api/', apiLimiter);
 app.use(express.json());
 
 const PORT = 3001;
@@ -21,11 +46,11 @@ const VALID_TYPES = ['Cost Reduction', 'Revenue Generation', 'Compliance', 'Qual
 const VALID_METHODOLOGIES = ['Six Sigma', 'Lean', 'Agile', 'Waterfall', 'Quick Win'];
 
 /**
- * Simple sanitization to prevent XSS by stripping basic HTML tags
+ * Robust sanitization to prevent XSS using the 'xss' library
  */
 function sanitize(text) {
     if (typeof text !== 'string') return text;
-    return text.replace(/<[^>]*>?/gm, '').trim();
+    return xss(text);
 }
 
 /**
@@ -40,11 +65,33 @@ function validateProject(p) {
     return errors;
 }
 
+// --- RBAC Authorization Middleware ---
+/**
+ * Simple authorization middleware to enforce role-based access on the server.
+ * In a production app, this would verify a JWT or session token.
+ */
+function authorize(allowedRoles = []) {
+    return (req, res, next) => {
+        const userRole = req.headers['x-user-role'];
+        if (!userRole) {
+            return res.status(401).json({ error: 'Identity verification required' });
+        }
+        if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+            return res.status(403).json({ error: 'Permission denied: Insufficient privileges' });
+        }
+        next();
+    };
+}
 // ------------------------------------
-app.get('/api/projects', (req, res) => {
+
+app.get('/api/projects', authorize(), (req, res) => {
+    let { limit = 100, offset = 0 } = req.query;
+    limit = parseInt(limit);
+    offset = parseInt(offset);
+
     try {
-        const projects = db.prepare('SELECT * FROM projects').all();
-        const logs = db.prepare('SELECT * FROM audit_log').all();
+        const projects = db.prepare('SELECT * FROM projects LIMIT ? OFFSET ?').all(limit, offset);
+        const logs = db.prepare('SELECT * FROM audit_log').all(); // Still unbounded, but audit_log is smaller per-request
 
         // Group logs by project_id
         const projectsWithLogs = projects.map(p => ({
@@ -70,7 +117,7 @@ app.get('/api/projects', (req, res) => {
 });
 
 // POST a new project
-app.post('/api/projects', (req, res) => {
+app.post('/api/projects', authorize(), (req, res) => {
     const p = req.body;
     const { history, ...data } = p;
 
@@ -109,7 +156,7 @@ app.post('/api/projects', (req, res) => {
 });
 
 // PATCH / update project status or details
-app.patch('/api/projects/:id', (req, res) => {
+app.patch('/api/projects/:id', authorize(), (req, res) => {
     const { id } = req.params;
     const { status, note, user, action, actualInvestment, actualRoi, title, summary, process, type, methodology, targetDate, docLink } = req.body;
 
@@ -157,8 +204,8 @@ app.patch('/api/projects/:id', (req, res) => {
     }
 });
 
-// DELETE a single project
-app.delete('/api/projects/:id', (req, res) => {
+// DELETE a single project (Only Admin or specific authorized users)
+app.delete('/api/projects/:id', authorize(['Admin']), (req, res) => {
     const { id } = req.params;
     try {
         db.transaction(() => {
@@ -172,8 +219,8 @@ app.delete('/api/projects/:id', (req, res) => {
     }
 });
 
-// POST batch delete
-app.post('/api/projects/batch-delete', (req, res) => {
+// POST batch delete (Only Admin)
+app.post('/api/projects/batch-delete', authorize(['Admin']), (req, res) => {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
         return res.status(400).json({ error: 'Invalid IDs' });
@@ -195,8 +242,8 @@ app.post('/api/projects/batch-delete', (req, res) => {
     }
 });
 
-// POST batch update status
-app.post('/api/projects/batch-update-status', (req, res) => {
+// POST batch update status (Manager/Admin)
+app.post('/api/projects/batch-update-status', authorize(['Manager', 'Admin']), (req, res) => {
     const { ids, status, user, action, note } = req.body;
     if (!Array.isArray(ids) || ids.length === 0 || !status) {
         return res.status(400).json({ error: 'Invalid input' });
@@ -220,8 +267,8 @@ app.post('/api/projects/batch-update-status', (req, res) => {
     }
 });
 
-// POST generic batch update
-app.post('/api/projects/batch-update', (req, res) => {
+// POST generic batch update (Manager/Admin)
+app.post('/api/projects/batch-update', authorize(['Manager', 'Admin']), (req, res) => {
     const { ids, updates, user, action, note } = req.body;
     if (!Array.isArray(ids) || ids.length === 0 || !updates || typeof updates !== 'object') {
         return res.status(400).json({ error: 'Invalid input' });
@@ -232,13 +279,14 @@ app.post('/api/projects/batch-update', (req, res) => {
             const fields = Object.keys(updates);
             if (fields.length === 0) return;
 
-            // Security: Whitelist allowed fields for bulk update
-            const allowedFields = ['status', 'manager_id', 'process', 'type', 'methodology'];
-            const validFields = fields.filter(f => allowedFields.includes(f));
+            // Security: Whitelist allowed fields for bulk update (Immutable)
+            const ALLOWED_FIELDS = Object.freeze(['status', 'manager_id', 'process', 'type', 'methodology']);
+            const validFields = fields.filter(f => ALLOWED_FIELDS.includes(f));
             
             if (validFields.length === 0) throw new Error('No valid fields provided for update');
 
-            const setClause = validFields.map(field => `${field} = ?`).join(', ');
+            // Construct the set clause using ONLY validated field names
+            const setClause = validFields.map(field => `"${field}" = ?`).join(', ');
             const values = validFields.map(f => updates[f]);
             
             const updateStmt = db.prepare(`UPDATE projects SET ${setClause} WHERE id = ?`);
@@ -263,7 +311,7 @@ app.post('/api/projects/batch-update', (req, res) => {
 
 
 // GET all users
-app.get('/api/users', (req, res) => {
+app.get('/api/users', authorize(), (req, res) => {
     try {
         const users = db.prepare('SELECT * FROM users').all();
         res.json(users);
@@ -275,7 +323,7 @@ app.get('/api/users', (req, res) => {
 // --- Phase 4: Collaboration (Comments) ---
 
 // GET comments for a project
-app.get('/api/projects/:id/comments', (req, res) => {
+app.get('/api/projects/:id/comments', authorize(), (req, res) => {
     const { id } = req.params;
     try {
         const comments = db.prepare('SELECT * FROM comments WHERE project_id = ? ORDER BY timestamp ASC').all(id);
@@ -287,7 +335,7 @@ app.get('/api/projects/:id/comments', (req, res) => {
 });
 
 // POST a new comment
-app.post('/api/comments', (req, res) => {
+app.post('/api/comments', authorize(), (req, res) => {
     const { projectId, userId, userName, text } = req.body;
     if (!projectId || !userId || !text) {
         return res.status(400).json({ error: 'Missing required fields' });

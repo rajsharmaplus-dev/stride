@@ -50,7 +50,7 @@ export default function App() {
   // Filter projects for the current view
   const displayProjects = projects.filter(p => {
     if (view === 'review') return p.managerId === user?.id && p.status === PROJECT_STATUS.PENDING;
-    if (view === 'closure') return p.submitterId === user?.id && p.status === PROJECT_STATUS.ACTIVE;
+    if (view === 'closure') return (p.submitterId === user?.id || user?.role === 'Admin') && p.status === PROJECT_STATUS.ACTIVE;
 
     // Default dashboard filtering
     const isOwner = p.submitterId === user?.id;

@@ -4,18 +4,23 @@ import { PROJECT_STATUS } from '../constants/projectConstants';
 const API_BASE = '/api';
 
 /**
- * Consolidated API helper with unified error handling
+ * Consolidated API helper with unified error handling and identity headers
  */
-async function fetchApi(endpoint, options = {}) {
+async function fetchApi(endpoint, options = {}, userRole = null, userId = null) {
     const url = `${API_BASE}${endpoint}`;
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
+            ...(userRole && { 'X-User-Role': userRole }),
+            ...(userId && { 'X-User-Id': userId })
         },
     };
 
     try {
-        const response = await fetch(url, { ...defaultOptions, ...options, headers: { ...defaultOptions.headers, ...options.headers } });
+        const response = await fetch(url, { 
+            ...options, 
+            headers: { ...defaultOptions.headers, ...options.headers } 
+        });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
@@ -36,8 +41,8 @@ export function useProjectData() {
     const fetchData = useCallback(async () => {
         try {
             const [uData, pData] = await Promise.all([
-                fetchApi('/users'),
-                fetchApi('/projects')
+                fetchApi('/users', {}, user?.role, user?.id),
+                fetchApi('/projects', {}, user?.role, user?.id)
             ]);
             
             setUsers(uData);
@@ -98,7 +103,7 @@ export function useProjectData() {
             await fetchApi('/projects', {
                 method: 'POST',
                 body: JSON.stringify(newProject)
-            });
+            }, user?.role, user?.id);
             await fetchData();
             return true;
         } catch (error) {
@@ -116,7 +121,7 @@ export function useProjectData() {
                     action: newStatus,
                     note: comment
                 })
-            });
+            }, user?.role, user?.id);
             await fetchData();
             return true;
         } catch (error) {
@@ -134,7 +139,7 @@ export function useProjectData() {
                     action: updates.status === PROJECT_STATUS.DRAFT ? 'Saved as Draft' : 'Resubmitted',
                     note: 'Updated after rework feedback'
                 })
-            });
+            }, user?.role, user?.id);
             await fetchData();
             return true;
         } catch (error) {
@@ -159,7 +164,7 @@ export function useProjectData() {
                     action: 'Closed',
                     note: 'Final financials submitted'
                 })
-            });
+            }, user?.role, user?.id);
             await fetchData();
             return true;
         } catch (error) {
@@ -172,7 +177,7 @@ export function useProjectData() {
             await fetchApi('/projects/batch-delete', {
                 method: 'POST',
                 body: JSON.stringify({ ids })
-            });
+            }, user?.role, user?.id);
             await fetchData();
             return true;
         } catch (error) {
@@ -190,7 +195,7 @@ export function useProjectData() {
                     user: user.name,
                     note: note || `Bulk status update to ${status}`
                 })
-            });
+            }, user?.role, user?.id);
             await fetchData();
             return true;
         } catch (error) {
@@ -209,7 +214,7 @@ export function useProjectData() {
                     action,
                     note: note || `Bulk update: ${Object.keys(updates).join(', ')}`
                 })
-            });
+            }, user?.role, user?.id);
             await fetchData();
             return true;
         } catch (error) {
@@ -219,7 +224,7 @@ export function useProjectData() {
 
     const fetchComments = async (projectId) => {
         try {
-            return await fetchApi(`/projects/${projectId}/comments`);
+            return await fetchApi(`/projects/${projectId}/comments`, {}, user?.role, user?.id);
         } catch (error) {
             return [];
         }
@@ -231,11 +236,11 @@ export function useProjectData() {
                 method: 'POST',
                 body: JSON.stringify({
                     projectId,
-                    userId: user.id,
-                    userName: user.name,
+                    userId: user?.id,
+                    userName: user?.name,
                     text
                 })
-            });
+            }, user?.role, user?.id);
             return true;
         } catch (error) {
             return false;
