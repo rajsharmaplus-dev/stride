@@ -1,3 +1,4 @@
+import React, { useState, useMemo } from 'react';
 import { Search, ChevronRight, FileSpreadsheet, X, ArrowUpDown, Calendar, Tag, Edit2 } from 'lucide-react';
 import { StatusBadge } from '../Common';
 import { formatCurrency } from '../../utils/format';
