@@ -3,6 +3,30 @@ import { PROJECT_STATUS } from '../constants/projectConstants';
 
 const API_BASE = '/api';
 
+/**
+ * Consolidated API helper with unified error handling
+ */
+async function fetchApi(endpoint, options = {}) {
+    const url = `${API_BASE}${endpoint}`;
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    };
+
+    try {
+        const response = await fetch(url, { ...defaultOptions, ...options, headers: { ...defaultOptions.headers, ...options.headers } });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`API Error [${endpoint}]:`, error);
+        throw error;
+    }
+}
+
 export function useProjectData() {
     const [user, setUser] = useState(null);
     const [users, setUsers] = useState([]);
@@ -11,12 +35,10 @@ export function useProjectData() {
 
     const fetchData = useCallback(async () => {
         try {
-            const [uRes, pRes] = await Promise.all([
-                fetch(`${API_BASE}/users`),
-                fetch(`${API_BASE}/projects`)
+            const [uData, pData] = await Promise.all([
+                fetchApi('/users'),
+                fetchApi('/projects')
             ]);
-            const uData = await uRes.json();
-            const pData = await pRes.json();
             
             setUsers(uData);
             setProjects(pData);
@@ -26,7 +48,7 @@ export function useProjectData() {
                 setUser(uData[0]);
             }
         } catch (error) {
-            console.error('Failed to fetch data:', error);
+            // Error logged by fetchApi
         } finally {
             setLoading(false);
         }
@@ -73,22 +95,21 @@ export function useProjectData() {
         };
 
         try {
-            await fetch(`${API_BASE}/projects`, {
+            await fetchApi('/projects', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newProject)
             });
-            await fetchData(); // Refresh data from server
+            await fetchData();
+            return true;
         } catch (error) {
-            console.error('Failed to add project:', error);
+            return false;
         }
     };
 
     const updateProjectStatus = async (projectId, newStatus, comment) => {
         try {
-            await fetch(`${API_BASE}/projects/${projectId}`, {
+            await fetchApi(`/projects/${projectId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     status: newStatus,
                     user: user.name,
@@ -97,16 +118,16 @@ export function useProjectData() {
                 })
             });
             await fetchData();
+            return true;
         } catch (error) {
-            console.error('Failed to update status:', error);
+            return false;
         }
     };
 
     const updateProject = async (projectId, updates) => {
         try {
-            await fetch(`${API_BASE}/projects/${projectId}`, {
+            await fetchApi(`/projects/${projectId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...updates,
                     user: user.name,
@@ -115,8 +136,9 @@ export function useProjectData() {
                 })
             });
             await fetchData();
+            return true;
         } catch (error) {
-            console.error('Failed to update project:', error);
+            return false;
         }
     };
 
@@ -124,12 +146,11 @@ export function useProjectData() {
         const investmentVal = parseFloat(investment);
         const roiVal = parseFloat(roi);
 
-        if (isNaN(investmentVal) || isNaN(roiVal)) return;
+        if (isNaN(investmentVal) || isNaN(roiVal)) return false;
 
         try {
-            await fetch(`${API_BASE}/projects/${projectId}`, {
+            await fetchApi(`/projects/${projectId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     status: PROJECT_STATUS.CLOSED,
                     actualInvestment: investmentVal,
@@ -140,31 +161,29 @@ export function useProjectData() {
                 })
             });
             await fetchData();
+            return true;
         } catch (error) {
-            console.error('Failed to close project:', error);
+            return false;
         }
     };
 
     const deleteProjects = async (ids) => {
         try {
-            await fetch(`${API_BASE}/projects/batch-delete`, {
+            await fetchApi('/projects/batch-delete', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids })
             });
             await fetchData();
+            return true;
         } catch (error) {
-            console.error('Failed to delete projects:', error);
+            return false;
         }
     };
 
-
-
     const batchUpdateStatus = async (ids, status, note) => {
         try {
-            await fetch(`${API_BASE}/projects/batch-update-status`, {
+            await fetchApi('/projects/batch-update-status', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ids,
                     status,
@@ -173,16 +192,16 @@ export function useProjectData() {
                 })
             });
             await fetchData();
+            return true;
         } catch (error) {
-            console.error('Failed to batch update status:', error);
+            return false;
         }
     };
 
     const batchUpdateProjects = async (ids, updates, action, note) => {
         try {
-            await fetch(`${API_BASE}/projects/batch-update`, {
+            await fetchApi('/projects/batch-update', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ids,
                     updates,
@@ -192,8 +211,9 @@ export function useProjectData() {
                 })
             });
             await fetchData();
+            return true;
         } catch (error) {
-            console.error('Failed to batch update projects:', error);
+            return false;
         }
     };
 

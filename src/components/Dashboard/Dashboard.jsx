@@ -1,5 +1,4 @@
-import React from 'react';
-import { LayoutDashboard, TrendingUp, AlertCircle, DollarSign, PlusCircle, ArrowUpRight, Sparkles } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, AlertCircle, DollarSign, PlusCircle, ArrowUpRight } from 'lucide-react';
 import { StatCard } from '../Common';
 import { formatCurrency } from '../../utils/format';
 import { ProjectTable } from './ProjectTable';

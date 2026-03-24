@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, X, Send, UserPlus, Edit3 } from 'lucide-react';
+import { Download, X, Send, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
 import { PROJECT_STATUS } from '../../constants/projectConstants';
 
 const STATUS_STYLES = {
@@ -250,6 +250,31 @@ export function BulkActionBar({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+export function Toast({ message, type = 'success', onClose }) {
+  React.useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const styles = {
+    success: 'bg-emerald-600 text-white shadow-emerald-500/20',
+    error: 'bg-rose-600 text-white shadow-rose-500/20',
+    info: 'bg-indigo-600 text-white shadow-indigo-500/20'
+  };
+
+  return (
+    <div className={`fixed bottom-24 right-8 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl animate-fade-in ${styles[type]}`}>
+      <div className="bg-white/20 p-1.5 rounded-xl">
+        {type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+      </div>
+      <span className="text-sm font-black tracking-tight">{message}</span>
+      <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors ml-2">
+        <X size={14} />
+      </button>
     </div>
   );
 }

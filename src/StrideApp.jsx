@@ -7,8 +7,8 @@ import { UserGuide } from './components/Help/UserGuide';
 import { Governance } from './components/Administration/Governance';
 import { useProjectData } from './hooks/useProjectData';
 import { ROLE_THEME, PROJECT_STATUS } from './constants/projectConstants';
-import { BulkActionBar } from './components/Common';
-import { ChevronRight, LayoutDashboard, FileText, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import { BulkActionBar, Toast } from './components/Common';
+import { ChevronRight } from 'lucide-react';
 import { exportProjectsToCSV } from './utils/csvExport';
 
 export default function App() {
@@ -32,6 +32,7 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [editingProject, setEditingProject] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [toast, setToast] = useState(null);
   const transitionTimer = useRef(null);
 
   // [CACHE BUSTER 2026-03-23] Guaranteed fallback to prevent null reference
@@ -70,28 +71,44 @@ export default function App() {
     setView('details');
   };
 
-  const handleFormSubmit = (formData, isDraft) => {
+  const handleFormSubmit = async (formData, isDraft) => {
+    let success = false;
     if (editingProject) {
-      // Rework resubmit: update existing project and change status
-      updateProject(editingProject.id, {
+      success = await updateProject(editingProject.id, {
         ...formData,
         status: isDraft ? PROJECT_STATUS.DRAFT : PROJECT_STATUS.PENDING,
       });
       setEditingProject(null);
     } else {
-      addProject(formData, isDraft);
+      success = await addProject(formData, isDraft);
     }
-    setView('dashboard');
+
+    if (success) {
+      setToast({ message: isDraft ? 'Draft saved successfully' : 'Project submitted for review', type: 'success' });
+      setView('dashboard');
+    } else {
+      setToast({ message: 'Operation failed. Please check inputs.', type: 'error' });
+    }
   };
 
-  const handleUpdateStatus = (id, status, comment) => {
-    updateProjectStatus(id, status, comment);
-    setView('dashboard');
+  const handleUpdateStatus = async (id, status, comment) => {
+    const success = await updateProjectStatus(id, status, comment);
+    if (success) {
+      setToast({ message: `Project ${status} successfully`, type: 'success' });
+      setView('dashboard');
+    } else {
+      setToast({ message: 'Status update failed', type: 'error' });
+    }
   };
 
-  const handleCloseProject = (id, investment, roi) => {
-    closeProject(id, investment, roi);
-    setView('dashboard');
+  const handleCloseProject = async (id, investment, roi) => {
+    const success = await closeProject(id, investment, roi);
+    if (success) {
+      setToast({ message: 'Project closed with final financials', type: 'success' });
+      setView('dashboard');
+    } else {
+      setToast({ message: 'Failed to close project', type: 'error' });
+    }
   };
 
   // Rework resubmit: open the form pre-filled with project data (B-02)
@@ -122,8 +139,13 @@ export default function App() {
     if (eligibleIds.length === 0) return;
 
     if (confirm(`Are you sure you want to delete ${eligibleIds.length} projects?`)) {
-      await deleteProjects(eligibleIds);
-      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      const success = await deleteProjects(eligibleIds);
+      if (success) {
+        setToast({ message: `Deleted ${eligibleIds.length} projects`, type: 'success' });
+        setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      } else {
+        setToast({ message: 'Bulk deletion failed', type: 'error' });
+      }
     }
   };
 
@@ -133,8 +155,13 @@ export default function App() {
       .map(p => p.id);
 
     if (eligibleIds.length > 0) {
-      await batchUpdateStatus(eligibleIds, PROJECT_STATUS.ACTIVE, 'Bulk approval from dashboard');
-      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      const success = await batchUpdateStatus(eligibleIds, PROJECT_STATUS.ACTIVE, 'Bulk approval from dashboard');
+      if (success) {
+        setToast({ message: `Approved ${eligibleIds.length} projects`, type: 'success' });
+        setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      } else {
+        setToast({ message: 'Bulk approval failed', type: 'error' });
+      }
     }
   };
 
@@ -144,8 +171,13 @@ export default function App() {
       .map(p => p.id);
 
     if (eligibleIds.length > 0) {
-      await batchUpdateStatus(eligibleIds, PROJECT_STATUS.DECLINED, 'Bulk decline from dashboard');
-      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      const success = await batchUpdateStatus(eligibleIds, PROJECT_STATUS.DECLINED, 'Bulk decline from dashboard');
+      if (success) {
+        setToast({ message: `Declined ${eligibleIds.length} projects`, type: 'success' });
+        setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      } else {
+        setToast({ message: 'Bulk decline failed', type: 'error' });
+      }
     }
   };
 
@@ -155,8 +187,13 @@ export default function App() {
       .map(p => p.id);
 
     if (eligibleIds.length > 0) {
-      await batchUpdateStatus(eligibleIds, PROJECT_STATUS.CLOSED, 'Bulk closure from dashboard');
-      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      const success = await batchUpdateStatus(eligibleIds, PROJECT_STATUS.CLOSED, 'Bulk closure from dashboard');
+      if (success) {
+        setToast({ message: `Closed ${eligibleIds.length} projects`, type: 'success' });
+        setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      } else {
+        setToast({ message: 'Bulk closure failed', type: 'error' });
+      }
     }
   };
 
@@ -166,15 +203,19 @@ export default function App() {
       .map(p => p.id);
 
     if (eligibleIds.length > 0) {
-      await batchUpdateStatus(eligibleIds, PROJECT_STATUS.PENDING, 'Bulk submission from dashboard');
-      setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      const success = await batchUpdateStatus(eligibleIds, PROJECT_STATUS.PENDING, 'Bulk submission from dashboard');
+      if (success) {
+        setToast({ message: `Submitted ${eligibleIds.length} projects`, type: 'success' });
+        setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+      } else {
+        setToast({ message: 'Bulk submission failed', type: 'error' });
+      }
     }
   };
 
   const handleBulkAssign = async () => {
     if (user?.role !== 'Manager' && user?.role !== 'Admin') return;
     
-    // Simple POC: prompt for manager ID
     const managerList = users
       .filter(u => u.role === 'Manager' || u.role === 'Admin')
       .map(u => `${u.name} (ID: ${u.id})`)
@@ -183,8 +224,13 @@ export default function App() {
     const newManagerId = window.prompt(`Select new reviewer ID:\n\n${managerList}`);
     
     if (newManagerId && users.some(u => u.id === newManagerId)) {
-      await batchUpdateProjects(selectedIds, { manager_id: newManagerId }, 'Reassign', `Bulk reassigned to ${newManagerId}`);
-      setSelectedIds([]);
+      const success = await batchUpdateProjects(selectedIds, { manager_id: newManagerId }, 'Reassign', `Bulk reassigned to ${newManagerId}`);
+      if (success) {
+        setToast({ message: 'Projects successfully reassigned', type: 'success' });
+        setSelectedIds([]);
+      } else {
+        setToast({ message: 'Reassignment failed', type: 'error' });
+      }
     }
   };
 
@@ -375,6 +421,13 @@ export default function App() {
         showSubmit={canSubmit}
         showReassign={canReassign}
       />
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   );
 }

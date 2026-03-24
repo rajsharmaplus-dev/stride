@@ -14,7 +14,33 @@ app.use(express.json());
 
 const PORT = 3001;
 
-// GET all projects with their audit logs
+// --- Security & Validation Helpers ---
+const VALID_STATUSES = ['Draft', 'Pending Approval', 'Pending Rework', 'Active', 'Declined', 'Closed'];
+const VALID_PROCESSES = ['Sales', 'HR', 'Finance', 'Operations', 'IT', 'Supply Chain'];
+const VALID_TYPES = ['Cost Reduction', 'Revenue Generation', 'Compliance', 'Quality Improvement', 'Process Efficiency'];
+const VALID_METHODOLOGIES = ['Six Sigma', 'Lean', 'Agile', 'Waterfall', 'Quick Win'];
+
+/**
+ * Simple sanitization to prevent XSS by stripping basic HTML tags
+ */
+function sanitize(text) {
+    if (typeof text !== 'string') return text;
+    return text.replace(/<[^>]*>?/gm, '').trim();
+}
+
+/**
+ * Validates if the project data is consistent and safe
+ */
+function validateProject(p) {
+    const errors = [];
+    if (p.status && !VALID_STATUSES.includes(p.status)) errors.push(`Invalid status: ${p.status}`);
+    if (p.process && !VALID_PROCESSES.includes(p.process)) errors.push(`Invalid process: ${p.process}`);
+    if (p.type && !VALID_TYPES.includes(p.type)) errors.push(`Invalid type: ${p.type}`);
+    if (p.methodology && !VALID_METHODOLOGIES.includes(p.methodology)) errors.push(`Invalid methodology: ${p.methodology}`);
+    return errors;
+}
+
+// ------------------------------------
 app.get('/api/projects', (req, res) => {
     try {
         const projects = db.prepare('SELECT * FROM projects').all();
@@ -49,6 +75,15 @@ app.post('/api/projects', (req, res) => {
     const { history, ...data } = p;
 
     try {
+        // Sanitization & Validation
+        const sanitizedTitle = sanitize(p.title);
+        const sanitizedSummary = sanitize(p.summary);
+        const validationErrors = validateProject(p);
+        
+        if (validationErrors.length > 0) {
+            return res.status(400).json({ error: 'Validation failed', details: validationErrors });
+        }
+
         const insertProject = db.prepare(`
             INSERT INTO projects (
                 id, title, submitter_id, manager_id, process, type, methodology, 
@@ -57,8 +92,8 @@ app.post('/api/projects', (req, res) => {
         `);
 
         insertProject.run(
-            p.id, p.title, p.submitterId, p.managerId, p.process, p.type, p.methodology,
-            p.summary, p.targetDate, p.estimatedBenefit, p.status, p.docLink, p.createdAt
+            p.id, sanitizedTitle, p.submitterId, p.managerId, p.process, p.type, p.methodology,
+            sanitizedSummary, p.targetDate, p.estimatedBenefit, p.status, p.docLink, p.createdAt
         );
 
         if (history && history.length > 0) {
@@ -80,6 +115,12 @@ app.patch('/api/projects/:id', (req, res) => {
 
     try {
         db.transaction(() => {
+            // Sanitization & Validation for updates
+            const validationErrors = validateProject({ status, process, type, methodology });
+            if (validationErrors.length > 0) {
+                throw new Error(validationErrors.join(', '));
+            }
+
             if (status) {
                 const updateStatus = db.prepare('UPDATE projects SET status = ? WHERE id = ?');
                 updateStatus.run(status, id);
@@ -92,13 +133,15 @@ app.patch('/api/projects/:id', (req, res) => {
 
             // Support full updates for rework
             if (title) {
+                const sanitizedTitle = sanitize(title);
+                const sanitizedSummary = sanitize(summary);
                 const updateFields = db.prepare(`
                     UPDATE projects SET 
                         title = ?, summary = ?, process = ?, type = ?, 
                         methodology = ?, target_date = ?, doc_link = ? 
                     WHERE id = ?
                 `);
-                updateFields.run(title, summary, process, type, methodology, targetDate, docLink, id);
+                updateFields.run(sanitizedTitle, sanitizedSummary, process, type, methodology, targetDate, docLink, id);
             }
 
             if (action) {
@@ -203,6 +246,10 @@ app.post('/api/projects/batch-update', (req, res) => {
             const date = new Date().toISOString().split('T')[0];
 
             for (const id of ids) {
+                // Final validation check for this batch item
+                const validationErrors = validateProject(updates);
+                if (validationErrors.length > 0) throw new Error(`Batch validation failed: ${validationErrors.join(', ')}`);
+
                 updateStmt.run(...values, id);
                 insertAudit.run(id, date, user, action || 'Bulk Update', note || `Updated: ${validFields.join(', ')}`);
             }
