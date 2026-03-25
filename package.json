@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "server": "node server/index.js",
-    "start": "node server/index.js & sleep 2 && vite --host 0.0.0.0"
+    "server": "node server/initDb.js && node server/index.js",
+    "start": "node server/initDb.js && node server/index.js & sleep 2 && vite --host 0.0.0.0"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",

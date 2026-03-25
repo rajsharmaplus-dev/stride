@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import React from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Sidebar } from './components/Layout/Sidebar';
 import { Dashboard } from './components/Dashboard/Dashboard';
@@ -13,6 +14,17 @@ import { ChevronRight, PlusCircle } from 'lucide-react';
 import { exportProjectsToCSV } from './utils/csvExport';
 
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [toast, setToast] = useState(null);
+  const transitionTimer = useRef(null);
+
   const {
     user,
     users,
@@ -33,17 +45,7 @@ export default function App() {
     loading
   } = useProjectManager();
 
-  const navigate = useNavigate();
-  const location = useLocation();
   const view = location.pathname.substring(1) || 'dashboard';
-
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingProject, setEditingProject] = useState(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [toast, setToast] = useState(null);
-  const transitionTimer = useRef(null);
 
   // [CACHE BUSTER 2026-03-23] Guaranteed fallback to prevent null reference
   const safeUser = user || { role: 'Employee' };
