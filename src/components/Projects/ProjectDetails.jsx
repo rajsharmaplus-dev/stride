@@ -36,6 +36,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
     const [isLoadingComments, setIsLoadingComments] = useState(false);
 
     const loadComments = useCallback(async () => {
+        if (!p?.id) return;
         setIsLoadingComments(true);
         if (typeof fetchComments === 'function') {
             const result = await fetchComments(p.id);
@@ -47,7 +48,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
             }
         }
         setIsLoadingComments(false);
-    }, [p.id, fetchComments]);
+    }, [p?.id, fetchComments]);
 
     useEffect(() => {
         if (p?.id) {
