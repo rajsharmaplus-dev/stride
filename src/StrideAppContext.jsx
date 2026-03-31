@@ -69,6 +69,7 @@ export default function App() {
 
   // Filter projects for the current view
   const displayProjects = projects.filter(p => {
+    if (!user) return false;
     if (view === 'review') return p.status === PROJECT_STATUS.PENDING && p.managerId === user?.id;
     if (view === 'closure') return p.status === PROJECT_STATUS.ACTIVE && p.submitterId === user?.id;
     return p.submitterId === user?.id || p.managerId === user?.id || user?.role === 'Admin';
@@ -150,8 +151,13 @@ export default function App() {
     navigate('/submit');
   };
 
+  // Determine selected projects for bulk actions (must be above handlers that use it)
+  const selectedProjects = useMemo(() => 
+    projects.filter(p => selectedIds.includes(p.id)),
+    [projects, selectedIds]
+  );
+
   const handleBulkExport = () => {
-    const selectedProjects = projects.filter(p => selectedIds.includes(p.id));
     exportProjectsToCSV(selectedProjects);
   };
 
@@ -299,11 +305,6 @@ export default function App() {
 
 
   // Determine which bulk actions to show based on user role and selection
-  const selectedProjects = useMemo(() => 
-    projects.filter(p => selectedIds.includes(p.id)),
-    [projects, selectedIds]
-  );
-
   const hasDraft = selectedProjects.some(p => p.status === PROJECT_STATUS.DRAFT);
   const hasPending = selectedProjects.some(p => p.status === PROJECT_STATUS.PENDING);
   const hasActive = selectedProjects.some(p => p.status === PROJECT_STATUS.ACTIVE);

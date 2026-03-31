@@ -29,7 +29,7 @@ export function SubmissionForm({ user, onSubmit, onBack, initialData }) {
         summary: initialData?.summary || '',
         targetDate: initialData?.targetDate || '',
         estimatedBenefit: initialData?.estimatedBenefit || '',
-        managerId: initialData?.managerId || user.managerId || '',
+        managerId: initialData?.managerId || user?.managerId || '',
         docLink: initialData?.docLink || ''
     });
     const [errors, setErrors] = useState({});
@@ -157,7 +157,7 @@ export function SubmissionForm({ user, onSubmit, onBack, initialData }) {
                     {/* Section: Ownership */}
                     <FormSection icon={<Target size={14} />} title="Ownership" description="Specify the organizational baseline and reporting structure." theme={theme}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormGroup label="Submitter" value={user.name} disabled icon={<User size={15} />} />
+                            <FormGroup label="Submitter" value={user?.name} disabled icon={<User size={15} />} />
                             <FormSelect label="Reporting Manager" name="managerId" value={formData.managerId} onChange={handleChange}
                                 options={MOCK_USERS.filter(u => u.role !== 'Employee').map(m => ({ value: m.id, label: m.name }))} required theme={theme} />
                             <FormSelect label="Business Process" name="process" value={formData.process} onChange={handleChange}

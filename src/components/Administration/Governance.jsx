@@ -179,7 +179,7 @@ function StatCard({ icon, label, value, trend }) {
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
                 <div className="p-2 bg-slate-50 rounded-xl">{icon}</div>
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${trend.includes('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${trend?.includes('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                     {trend}
                 </span>
             </div>

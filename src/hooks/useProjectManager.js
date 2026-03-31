@@ -115,13 +115,14 @@ export function useProjectManager() {
     }, [projects, user]);
 
     const handleSwitchUser = () => {
-        if (users.length === 0) return;
+        if (users.length === 0 || !user) return;
         const currentIndex = users.findIndex(u => u.id === user.id);
         const nextIndex = (currentIndex + 1) % users.length;
         setUser(users[nextIndex]);
     };
 
     const addProject = async (formData, isDraft) => {
+        if (!user) return { success: false, error: 'User not initialized' };
         const newProject = {
             ...formData,
             id: `p${Date.now()}`,

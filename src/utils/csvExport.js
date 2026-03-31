@@ -14,8 +14,8 @@ export function exportProjectsToCSV(projects) {
 
     // Map projects to rows
     const rows = projects.map(p => [
-        p.id,
-        `"${p.title.replace(/"/g, '""')}"`, // Escape quotes
+        p?.id || '',
+        `"${(p?.title || '').replace(/"/g, '""')}"`, // Escape quotes
         p.status,
         p.process || '',
         p.type || '',
