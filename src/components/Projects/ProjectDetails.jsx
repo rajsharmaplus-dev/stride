@@ -39,7 +39,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
         if (!p?.id) return;
         setIsLoadingComments(true);
         if (typeof fetchComments === 'function') {
-            const result = await fetchComments(p.id);
+            const result = await fetchComments(p?.id);
             if (result?.isNotFound) {
                 setComments([]);
                 // The parent app will likely handle the 404, but we can set a local state if needed
@@ -61,7 +61,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
         setIsSubmitting(true);
         try {
             if (typeof addComment === 'function') {
-                const result = await addComment(p.id, newComment);
+                const result = await addComment(p?.id, newComment);
                 if (result?.success) {
                     setNewComment('');
                     loadComments();
@@ -79,7 +79,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
         setIsSubmitting(true);
         try {
             if (typeof onUpdateStatus === 'function') {
-                const result = await onUpdateStatus(p.id, status, note);
+                const result = await onUpdateStatus(p?.id, status, note);
                 if (result?.isNotFound) {
                     // Handled by parent
                 }
@@ -103,7 +103,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
         setIsSubmitting(true);
         try {
             if (typeof onCloseProject === 'function') {
-                const result = await onCloseProject(p.id, closureData.investment, closureData.roi);
+                const result = await onCloseProject(p?.id, closureData.investment, closureData.roi);
                 if (result?.isNotFound) {
                     // Handled by parent
                 }
