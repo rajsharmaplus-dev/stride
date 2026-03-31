@@ -14,10 +14,9 @@ import {
     CheckCircle2,
     Sparkles
 } from 'lucide-react';
-import { MOCK_USERS } from '../../data/mockData';
 import { PROCESSES, PROJECT_TYPES, METHODOLOGIES, ROLE_THEME } from '../../constants/projectConstants';
 
-export function SubmissionForm({ user, onSubmit, onBack, initialData }) {
+export function SubmissionForm({ user, users = [], onSubmit, onBack, initialData }) {
     const theme = ROLE_THEME[user?.role] || ROLE_THEME['Employee'];
     const isRework = Boolean(initialData);
 
@@ -159,7 +158,7 @@ export function SubmissionForm({ user, onSubmit, onBack, initialData }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormGroup label="Submitter" value={user?.name} disabled icon={<User size={15} />} />
                             <FormSelect label="Reporting Manager" name="managerId" value={formData.managerId} onChange={handleChange}
-                                options={MOCK_USERS.filter(u => u.role !== 'Employee').map(m => ({ value: m.id, label: m.name }))} required theme={theme} />
+                                options={users.filter(u => u.role !== 'Employee').map(m => ({ value: m.id, label: m.name }))} required theme={theme} />
                             <FormSelect label="Business Process" name="process" value={formData.process} onChange={handleChange}
                                 options={PROCESSES.map(p => ({ value: p, label: p }))} required theme={theme} />
                             <FormSelect label="Project Category" name="type" value={formData.type} onChange={handleChange}

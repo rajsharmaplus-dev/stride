@@ -448,6 +448,7 @@ export default function App() {
             <Route path="/submit" element={
               <SubmissionForm
                 user={user}
+                users={users}
                 onSubmit={handleFormSubmit}
                 onBack={() => { navigate('/dashboard'); setEditingProject(null); }}
                 initialData={editingProject}
