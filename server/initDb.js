@@ -13,9 +13,10 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        email TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
         role TEXT NOT NULL,
         manager_id TEXT,
+        google_id TEXT UNIQUE,
         FOREIGN KEY (manager_id) REFERENCES users(id)
     );
 
@@ -62,9 +63,9 @@ db.exec(`
 
 // Mock Data
 const MOCK_USERS = [
-    { id: 'u1', name: 'Alex Submitter', email: 'alex@company.com', role: 'Employee', managerId: 'u2' },
-    { id: 'u2', name: 'Sarah Manager', email: 'sarah@company.com', role: 'Manager', managerId: 'u3' },
-    { id: 'u3', name: 'David Business Head', email: 'david@company.com', role: 'Admin', managerId: null },
+    { id: 'u1', name: 'Alex Submitter', email: 'alex@company.com', role: 'Employee', managerId: 'u2', googleId: null },
+    { id: 'u2', name: 'Sarah Manager', email: 'sarah@company.com', role: 'Manager', managerId: 'u3', googleId: null },
+    { id: 'u3', name: 'David Business Head', email: 'david@company.com', role: 'Admin', managerId: null, googleId: null },
 ];
 
 const INITIAL_PROJECTS = [
@@ -126,8 +127,8 @@ const INITIAL_PROJECTS = [
 ];
 
 // Seed Users
-const insertUser = db.prepare('INSERT OR IGNORE INTO users (id, name, email, role, manager_id) VALUES (?, ?, ?, ?, ?)');
-MOCK_USERS.forEach(u => insertUser.run(u.id, u.name, u.email, u.role, u.managerId));
+const insertUser = db.prepare('INSERT OR IGNORE INTO users (id, name, email, role, manager_id, google_id) VALUES (?, ?, ?, ?, ?, ?)');
+MOCK_USERS.forEach(u => insertUser.run(u.id, u.name, u.email, u.role, u.managerId, u.googleId));
 
 // Seed Projects and History
 const insertProject = db.prepare(`

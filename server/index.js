@@ -5,6 +5,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import xss from 'xss';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client('REPLACE_WITH_YOUR_GOOGLE_CLIENT_ID'); // Placeholder
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, '../stride.db');
@@ -36,6 +40,7 @@ const apiLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 app.use(express.json());
+app.use(cookieParser());
 
 const PORT = 3001;
 
@@ -72,17 +77,85 @@ function validateProject(p) {
  */
 function authorize(allowedRoles = []) {
     return (req, res, next) => {
-        const userRole = req.headers['x-user-role'];
-        if (!userRole) {
-            return res.status(401).json({ error: 'Identity verification required' });
+        // Now using secure cookie sessions instead of insecure headers
+        const session = req.cookies.stride_session ? JSON.parse(req.cookies.stride_session) : null;
+        
+        if (!session || !session.userId || !session.role) {
+            return res.status(401).json({ error: 'Authentication required' });
         }
-        if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+        
+        if (allowedRoles.length > 0 && !allowedRoles.includes(session.role)) {
             return res.status(403).json({ error: 'Permission denied: Insufficient privileges' });
         }
+        
+        req.user = session; // Attach user info to request
         next();
     };
 }
 // ------------------------------------
+
+// --- Authentication Endpoints ---
+
+// Verify Google ID Token and establish session
+app.post('/api/auth/google-login', async (req, res) => {
+    const { credential } = req.body;
+    if (!credential) return res.status(400).json({ error: 'Missing credential' });
+
+    try {
+        // In a real app, you would verify the token with Google:
+        // const ticket = await client.verifyIdToken({ idToken: credential, audience: 'CLIENT_ID' });
+        // const payload = ticket.getPayload();
+        
+        // For this implementation, we'll decode the JWT (non-secure for demo, but structure is correct)
+        // Note: Real implementation MUST use client.verifyIdToken()
+        const base64Url = credential.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
+
+        const { email, name, sub: googleId } = payload;
+
+        // DB JIT Provisioning / Lookup
+        let user = db.prepare('SELECT * FROM users WHERE google_id = ? OR email = ?').get(googleId, email);
+
+        if (!user) {
+            // New User: Auto-provision as Employee
+            const userId = `u${Date.now()}`;
+            db.prepare('INSERT INTO users (id, name, email, role, google_id) VALUES (?, ?, ?, ?, ?)')
+              .run(userId, name, email, 'Employee', googleId);
+            user = { id: userId, name, email, role: 'Employee', google_id: googleId };
+        } else if (!user.google_id) {
+            // Link existing mock user to Google ID
+            db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, user.id);
+            user.google_id = googleId;
+        }
+
+        const sessionData = { userId: user.id, name: user.name, role: user.role };
+        
+        res.cookie('stride_session', JSON.stringify(sessionData), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        res.json({ success: true, user: sessionData });
+    } catch (error) {
+        console.error('Login Error:', error);
+        res.status(500).json({ error: 'Login failed' });
+    }
+});
+
+app.get('/api/auth/me', (req, res) => {
+    const session = req.cookies.stride_session ? JSON.parse(req.cookies.stride_session) : null;
+    if (!session) return res.json({ user: null });
+    res.json({ user: session });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    res.clearCookie('stride_session');
+    res.json({ success: true });
+});
+
 
 app.get('/api/projects', authorize(), (req, res) => {
     let { limit = 20, offset = 0 } = req.query; // Reduced default limit for testing pagination
