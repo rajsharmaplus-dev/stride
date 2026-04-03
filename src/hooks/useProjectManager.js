@@ -5,15 +5,13 @@ import { PROJECT_STATUS } from '../constants/projectConstants';
 const API_BASE = '/api';
 
 /**
- * Consolidated API helper with unified error handling and identity headers
+ * Consolidated API helper with unified error handling
  */
-async function fetchApi(endpoint, options = {}, userRole = null, userId = null) {
+async function fetchApi(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
-            ...(userRole && { 'X-User-Role': userRole }),
-            ...(userId && { 'X-User-Id': userId })
         },
     };
 
@@ -27,6 +25,12 @@ async function fetchApi(endpoint, options = {}, userRole = null, userId = null) 
         if (response.status === 429) {
             const error = new Error('You have reached the request limit. Please wait 15 minutes before trying again.');
             error.isRateLimit = true;
+            throw error;
+        }
+
+        if (response.status === 401) {
+            const error = new Error('Session expired. Please log in again.');
+            error.isUnauthorized = true;
             throw error;
         }
 
@@ -61,37 +65,77 @@ export function useProjectManager() {
     const [totalCount, setTotalCount] = useState(0);
     const [limit, setLimit] = useState(20);
     const [loading, setLoading] = useState(true);
+    const [authError, setAuthError] = useState(null);
+
+    // 1. Check session on mount
+    useEffect(() => {
+        const checkSession = async () => {
+            try {
+                const data = await fetchApi('/auth/me');
+                if (data?.user) {
+                    setUser(data.user);
+                }
+            } catch (err) {
+                console.error('Session check failed:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        checkSession();
+    }, []);
 
     const fetchData = useCallback(async (currentLimit = limit) => {
+        if (!user) return; // Only fetch data if authenticated
+        
         try {
-            // 1. Fetch users first (public endpoint)
-            const uData = await fetchApi('/users', {}, user?.role, user?.id);
-            setUsers(uData || []);
+            // Parallel fetch for speed
+            const [uData, pData] = await Promise.all([
+                fetchApi('/users'),
+                fetchApi(`/projects?limit=${currentLimit}`)
+            ]);
             
-            // 2. Identify current user (existing or first available)
-            let currentUser = user;
-            if (!user && uData?.length > 0) {
-                currentUser = uData[0];
-                setUser(currentUser);
-            }
-
-            // 3. Only fetch projects if identity is established
-            if (currentUser) {
-                const pData = await fetchApi(`/projects?limit=${currentLimit}`, {}, currentUser.role, currentUser.id);
-                setProjects(pData?.items || []);
-                setTotalCount(pData?.total || 0);
-            }
+            setUsers(uData || []);
+            setProjects(pData?.items || []);
+            setTotalCount(pData?.total || 0);
         } catch (error) {
-            // Error logged by fetchApi
-        } finally {
-            setLoading(false);
+            if (error.isUnauthorized) {
+                setUser(null);
+            }
         }
     }, [user, limit]);
 
     useEffect(() => {
-        setLoading(true);
-        fetchData();
-    }, [fetchData]);
+        if (user) {
+            fetchData();
+        }
+    }, [fetchData, user]);
+
+    const login = async (credential) => {
+        setAuthError(null);
+        try {
+            const data = await fetchApi('/auth/google-login', {
+                method: 'POST',
+                body: JSON.stringify({ credential })
+            });
+            if (data.success) {
+                setUser(data.user);
+                return { success: true };
+            }
+        } catch (error) {
+            setAuthError(error.message);
+            return { success: false, error: error.message };
+        }
+    };
+
+    const logout = async () => {
+        try {
+            await fetchApi('/auth/logout', { method: 'POST' });
+        } finally {
+            setUser(null);
+            setProjects([]);
+            setUsers([]);
+        }
+    };
 
     const loadMore = () => {
         const nextLimit = limit + 20;
@@ -105,28 +149,21 @@ export function useProjectManager() {
 
     const stats = useMemo(() => {
         if (!user) return { total: 0, active: 0, pending: 0, roi: 0 };
-        const relevant = projects.filter(p => p?.submitterId === user?.id || p?.managerId === user?.id || user?.role === 'Admin');
+        const relevant = projects; // Backend already filters for user
         return {
             total: relevant.length,
             active: relevant.filter(p => p?.status === PROJECT_STATUS.ACTIVE).length,
-            pending: relevant.filter(p => p?.status === PROJECT_STATUS.PENDING && p?.managerId === user?.id).length,
+            pending: relevant.filter(p => p?.status === PROJECT_STATUS.PENDING && p?.managerId === user?.userId).length,
             roi: relevant.reduce((acc, p) => acc + (p?.actualRoi || 0), 0)
         };
     }, [projects, user]);
-
-    const handleSwitchUser = () => {
-        if (users.length === 0 || !user) return;
-        const currentIndex = users.findIndex(u => u.id === user.id);
-        const nextIndex = (currentIndex + 1) % users.length;
-        setUser(users[nextIndex]);
-    };
 
     const addProject = async (formData, isDraft) => {
         if (!user) return { success: false, error: 'User not initialized' };
         const newProject = {
             ...formData,
             id: `p${Date.now()}`,
-            submitterId: user.id,
+            submitterId: user.userId,
             createdAt: new Date().toISOString().split('T')[0],
             status: isDraft ? PROJECT_STATUS.DRAFT : PROJECT_STATUS.PENDING,
             history: [{
@@ -144,7 +181,7 @@ export function useProjectManager() {
             await fetchApi('/projects', {
                 method: 'POST',
                 body: JSON.stringify(newProject)
-            }, user?.role, user?.id);
+            });
             await fetchData();
             return { success: true };
         } catch (error) {
@@ -162,7 +199,7 @@ export function useProjectManager() {
                     action: newStatus,
                     note: comment
                 })
-            }, user?.role, user?.id);
+            });
             await fetchData();
             return { success: true };
         } catch (error) {
@@ -181,7 +218,7 @@ export function useProjectManager() {
                     action: updates.status === PROJECT_STATUS.DRAFT ? 'Saved as Draft' : 'Resubmitted',
                     note: 'Updated after rework feedback'
                 })
-            }, user?.role, user?.id);
+            });
             await fetchData();
             return { success: true };
         } catch (error) {
@@ -207,7 +244,7 @@ export function useProjectManager() {
                     action: 'Closed',
                     note: 'Final financials submitted'
                 })
-            }, user?.role, user?.id);
+            });
             await fetchData();
             return { success: true };
         } catch (error) {
@@ -221,7 +258,7 @@ export function useProjectManager() {
             await fetchApi('/projects/batch-delete', {
                 method: 'POST',
                 body: JSON.stringify({ ids })
-            }, user?.role, user?.id);
+            });
             await fetchData();
             return { success: true };
         } catch (error) {
@@ -239,7 +276,7 @@ export function useProjectManager() {
                     user: user.name,
                     note: note || `Bulk status update to ${status}`
                 })
-            }, user?.role, user?.id);
+            });
             await fetchData();
             return { success: true };
         } catch (error) {
@@ -258,7 +295,7 @@ export function useProjectManager() {
                     action,
                     note: note || `Bulk update: ${Object.keys(updates).join(', ')}`
                 })
-            }, user?.role, user?.id);
+            });
             await fetchData();
             return { success: true };
         } catch (error) {
@@ -268,7 +305,7 @@ export function useProjectManager() {
 
     const fetchComments = async (projectId) => {
         try {
-            return await fetchApi(`/projects/${projectId}/comments`, {}, user?.role, user?.id);
+            return await fetchApi(`/projects/${projectId}/comments`);
         } catch (error) {
             const isNotFound = error.message.includes('404');
             return { error: error.message, isNotFound };
@@ -281,11 +318,11 @@ export function useProjectManager() {
                 method: 'POST',
                 body: JSON.stringify({
                     projectId,
-                    userId: user?.id,
+                    userId: user?.userId,
                     userName: user?.name,
                     text
                 })
-            }, user?.role, user?.id);
+            });
             return { success: true };
         } catch (error) {
             const isNotFound = error.message.includes('404');
@@ -294,12 +331,15 @@ export function useProjectManager() {
     };
 
     return {
-        user: user || { name: 'Loading...', role: 'Employee' },
+        user,
+        users,
         projects,
         totalCount,
         stats,
         loading,
-        handleSwitchUser,
+        authError,
+        login,
+        logout,
         addProject,
         updateProject,
         updateProjectStatus,

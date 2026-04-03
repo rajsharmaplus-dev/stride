@@ -116,7 +116,7 @@ function getNavSections(role, stats, activeView, setView, theme) {
     };
 }
 
-export function Sidebar({ user, activeView, setView, stats, onSwitchUser }) {
+export function Sidebar({ user, activeView, setView, stats, onLogout }) {
     const theme = ROLE_THEME[user?.role] || ROLE_THEME['Employee'];
     const sections = getNavSections(user?.role, stats, activeView, setView, theme);
     const initials = (user?.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -204,9 +204,9 @@ export function Sidebar({ user, activeView, setView, stats, onSwitchUser }) {
                     </div>
                 </div>
 
-                {/* Switch Session button */}
+                {/* Logout button */}
                 <button
-                    onClick={onSwitchUser}
+                    onClick={onLogout}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border"
                     style={{
                         backgroundColor: theme.accentMuted,
@@ -221,7 +221,7 @@ export function Sidebar({ user, activeView, setView, stats, onSwitchUser }) {
                     }}
                 >
                     <LogOut size={12} />
-                    Switch Session
+                    Sign Out
                 </button>
             </div>
         </aside>

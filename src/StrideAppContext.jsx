@@ -5,12 +5,13 @@ import { Sidebar } from './components/Layout/Sidebar';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { SubmissionForm } from './components/Forms/SubmissionForm';
 import { ProjectDetails } from './components/Projects/ProjectDetails';
+import { LoginPage } from './components/Auth/LoginPage';
 import { UserGuide } from './components/Help/UserGuide';
 import { Governance } from './components/Administration/Governance';
 import { useProjectManager } from './hooks/useProjectManager';
 import { ROLE_THEME, PROJECT_STATUS } from './constants/projectConstants';
 import { BulkActionBar, Toast } from './components/Common';
-import { ChevronRight, PlusCircle } from 'lucide-react';
+import { ChevronRight, PlusCircle, LogOut } from 'lucide-react';
 import { exportProjectsToCSV } from './utils/csvExport';
 
 export default function App() {
@@ -25,13 +26,15 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const transitionTimer = useRef(null);
 
-  const {
+    const {
     user,
     users,
     projects,
     totalCount,
     stats,
-    handleSwitchUser,
+    login,
+    logout,
+    authError,
     addProject,
     updateProject,
     updateProjectStatus,
@@ -53,13 +56,20 @@ export default function App() {
 
   // Derive selectedProjectId from URL if in /details/:id
   useEffect(() => {
+    if (!user && !loading && location.pathname !== '/login') {
+      navigate('/login');
+    }
+    if (user && location.pathname === '/login') {
+      navigate('/dashboard');
+    }
+
     const parts = location.pathname.split('/');
     if (parts[1] === 'details' && parts[2]) {
       setSelectedProjectId(parts[2]);
     } else {
       setSelectedProjectId(null);
     }
-  }, [location]);
+  }, [location, user, loading, navigate]);
 
   // Always derive selectedProject from projects array → fixes stale state (B-03)
   const selectedProject = useMemo(() => {
@@ -75,13 +85,13 @@ export default function App() {
     return p.submitterId === user?.id || p.managerId === user?.id || user?.role === 'Admin';
   });
 
-  const handleSwitchWithTransition = useCallback(() => {
+  const handleLogout = useCallback(async () => {
     if (transitionTimer.current) clearTimeout(transitionTimer.current);
     setIsTransitioning(true);
-    handleSwitchUser();
-    navigate('/dashboard');
+    await logout();
+    navigate('/login');
     transitionTimer.current = setTimeout(() => setIsTransitioning(false), 500);
-  }, [handleSwitchUser, navigate]);
+  }, [logout, navigate]);
 
   const handleSelectProject = (project) => {
     navigate(`/details/${project?.id}`);
@@ -341,20 +351,18 @@ export default function App() {
     );
   }
 
+  // If we are not loading and have no user, and NOT on the login page, 
+  // the useEffect redirection will handle move to /login.
+  // We only show a hard error if we specifically detect a connection failure (optional enhancement).
+
+  // If no user, we render a minimal structure (just Routes) so LoginPage can show
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-        <div className="p-4 bg-red-50 rounded-2xl border border-red-100 mb-6">
-            <span className="text-red-500 font-black tracking-widest uppercase text-xs">Connection Error</span>
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2 italic">STRIDE</h2>
-        <p className="text-sm font-medium text-slate-500 max-w-sm mt-2">Unable to connect to the backend server or load the user profile.</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-8 px-6 py-3 bg-slate-900 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-colors"
-        >
-          Retry Connection
-        </button>
+      <div className="min-h-screen bg-surface-50">
+        <Routes>
+          <Route path="/login" element={<LoginPage onLogin={login} error={authError} />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
       </div>
     );
   }
@@ -366,7 +374,7 @@ export default function App() {
         activeView={view}
         setView={(v) => { navigate(`/${v}`); setEditingProject(null); }}
         stats={stats}
-        onSwitchUser={handleSwitchWithTransition}
+        onLogout={handleLogout}
       />
 
       <main className="xl:pl-72 min-h-screen pb-32">
@@ -384,10 +392,10 @@ export default function App() {
             <span className="text-xl font-black text-white italic tracking-tighter">STRIDE</span>
           </div>
           <button
-            onClick={() => handleSwitchWithTransition()}
+            onClick={() => handleLogout()}
             className="p-2 rounded-xl bg-white/10 text-white"
           >
-            <ChevronRight size={18} />
+            <LogOut size={18} />
           </button>
         </header>
 
@@ -452,6 +460,13 @@ export default function App() {
                 onSubmit={handleFormSubmit}
                 onBack={() => { navigate('/dashboard'); setEditingProject(null); }}
                 initialData={editingProject}
+              />
+            } />
+
+            <Route path="/login" element={
+              <LoginPage 
+                onLogin={login} 
+                error={authError} 
               />
             } />
 
