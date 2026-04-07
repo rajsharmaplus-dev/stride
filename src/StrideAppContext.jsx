@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Sidebar } from './components/Layout/Sidebar';
 import { Dashboard } from './components/Dashboard/Dashboard';
@@ -343,10 +342,12 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2 italic">STRIDE</h2>
-        <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Initializing Secure Database...</p>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div className="relative w-24 h-1 bg-slate-100 overflow-hidden mb-6 rounded-full">
+          <div className="absolute top-0 left-0 h-full bg-[#FF5F2D] animate-loading-bar"></div>
+        </div>
+        <h2 className="text-3xl font-black text-black tracking-tighter mb-1 italic">STRIDE</h2>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">Optimizing Portfolio...</p>
       </div>
     );
   }

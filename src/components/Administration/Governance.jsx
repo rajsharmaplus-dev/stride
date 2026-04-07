@@ -12,35 +12,20 @@ import {
 import { StatusBadge } from '../Common';
 
 export function Governance({ projects, onSelectProject }) {
-    // Generate some mock audit events based on projects
+    // Map real audit logs from all accessible projects
     const auditEvents = (projects || []).flatMap(p => {
-        // Safely find a user name from history or use a fallback
-        const submitterName = p?.history?.find(h => h.action === 'Submitted')?.user || 'Alex Submitter';
-
-        const events = [
-            {
-                id: `sub-${p?.id || Math.random()}`,
-                type: 'Submission',
-                project: p?.title || 'Untitled Initiative',
-                user: submitterName,
-                date: p?.createdAt || '2026-02-10',
-                status: 'COMPLETED',
-                detail: 'Initial baseline submitted'
-            }
-        ];
-        if (p?.status === 'ACTIVE' || p?.status === 'CLOSED') {
-            events.push({
-                id: `app-${p?.id || Math.random()}`,
-                type: 'Approval',
-                project: p?.title || 'Untitled Initiative',
-                user: 'Sarah Manager',
-                date: '2026-02-11',
-                status: 'COMPLETED',
-                detail: 'Strategic alignment verified'
-            });
-        }
-        return events;
-    }).sort((a, b) => (b?.id || '').localeCompare(a?.id || ''));
+        const history = Array.isArray(p.history) ? p.history : [];
+        
+        return history.map(h => ({
+            id: `${p.id}-${h.id || Math.random()}`,
+            type: h.action,
+            project: p.title,
+            user: h.user,
+            date: h.date,
+            status: 'COMPLETED',
+            detail: h.note || 'No additional details'
+        }));
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
     return (
         <div className="space-y-10 animate-fade-in pb-20">

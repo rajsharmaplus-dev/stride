@@ -1,26 +1,54 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@900&display=swap');
 @import "tailwindcss";
 
 
 
 @theme {
-    --color-primary-50: #f0f9ff;
-    --color-primary-100: #e0f2fe;
-    --color-primary-500: #0ea5e9;
-    --color-primary-600: #0284c7;
-    --color-primary-700: #0369a1;
+    --color-primary-50: #fff5f2;
+    --color-primary-100: #ffe8e3;
+    --color-primary-500: #FF5F2D;
+    --color-primary-600: #e55529;
+    --color-primary-700: #cc4c24;
 
-    --color-surface-50: #f8fafc;
-    --color-surface-100: #f1f5f9;
-    --color-surface-200: #e2e8f0;
+    --color-surface-50: #fcfcfc;
+    --color-surface-100: #f4f4f4;
+    --color-surface-200: #e6e7e8;
 
-    --font-sans: 'Inter', 'Outfit', system-ui, sans-serif;
+    --color-accent-blue: #4442E3;
+
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+    html {
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    h1, h2, h3, .font-display {
+        font-family: var(--font-display);
+        letter-spacing: -0.05em;
+    }
 }
 
 @layer base {
     body {
         @apply bg-surface-50 text-slate-900 antialiased tracking-tight;
         font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    }
+
+    /* Branding bar for corporate identity */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #FF5F2D;
+        z-index: 100;
     }
 }
 
@@ -54,19 +82,24 @@
 
 /* Animations */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@keyframes loadingBar {
+    0% { left: -100%; width: 30%; }
+    50% { left: 0%; width: 60%; }
+    100% { left: 100%; width: 100%; }
 }
 
 .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-loading-bar {
+    position: absolute;
+    height: 100%;
+    animation: loadingBar 2s infinite ease-in-out;
 }
 
 /* Role switch transition — a short flash + fade for intuitive session awareness */

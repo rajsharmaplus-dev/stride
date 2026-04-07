@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "server": "node server/initDb.js && node server/index.js",
-    "start": "node server/initDb.js && node server/index.js & sleep 2 && vite --host 0.0.0.0"
+    "server": "node server/index.js",
+    "init-db": "node server/initDb.js",
+    "start": "node server/initDb.js && node server/index.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
@@ -17,6 +18,7 @@
     "express-rate-limit": "^8.3.1",
     "google-auth-library": "^10.6.2",
     "lucide-react": "^0.563.0",
+    "pg": "^8.20.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.2",

@@ -126,39 +126,44 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
             style={{ background: theme.sidebarBg }}
         >
             {/* Logo */}
-            <div className="flex items-center gap-3 mb-10 px-2 transition-transform hover:scale-105">
-                <div
-                    className="p-2.5 rounded-xl shadow-lg"
-                    style={{ backgroundColor: theme.accentMuted, boxShadow: `0 4px 12px ${theme.accentShadow}` }}
-                >
-                    <Zap size={24} className="text-white fill-current" style={{ color: theme.accent }} />
-                </div>
-                <div>
-                    <h1 className="text-xl font-black tracking-tighter leading-none italic text-white">STRIDE</h1>
-                    <p className="text-[9px] font-black tracking-[0.25em] uppercase opacity-70" style={{ color: theme.pillText }}>
-                        Sync • Scope • Solve
-                    </p>
-                </div>
+            <div className="flex flex-col mb-12 px-2">
+                <div className="w-10 h-1 bg-[#FF5F2D] mb-4" />
+                <h1 className="text-2xl font-black tracking-tighter leading-none italic text-white">STRIDE</h1>
+                <p className="text-[9px] font-bold tracking-[0.4em] uppercase text-[#BCBEC0] mt-2">
+                    Digital Governance
+                </p>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 flex flex-col overflow-y-auto pr-2 custom-scrollbar space-y-1">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 px-4">
-                    Portfolio Management
-                </p>
-                {sections.portfolio}
+            <nav className="flex-1 flex flex-col overflow-y-auto pr-2 custom-scrollbar space-y-6">
+                <div>
+                    <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-4 px-4">
+                        01 / Core Portfolio
+                    </p>
+                    <div className="space-y-1">
+                        {sections.portfolio}
+                    </div>
+                </div>
 
-                {sections.support.length > 0 && (
-                    <div className="pt-6 mt-4 border-t border-white/5">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 px-4">Support</p>
-                        {sections.support}
+                {sections.admin.length > 0 && (
+                    <div>
+                        <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-4 px-4">
+                            02 / Governance
+                        </p>
+                        <div className="space-y-1">
+                            {sections.admin}
+                        </div>
                     </div>
                 )}
 
-                {sections.admin.length > 0 && (
-                    <div className="pt-6 mt-4 border-t border-white/5">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 px-4">Administration</p>
-                        {sections.admin}
+                {sections.support.length > 0 && (
+                    <div className="pt-6 border-t border-white/5">
+                        <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-4 px-4">
+                            03 / Systems
+                        </p>
+                        <div className="space-y-1">
+                            {sections.support}
+                        </div>
                     </div>
                 )}
             </nav>

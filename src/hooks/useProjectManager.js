@@ -70,6 +70,12 @@ export function useProjectManager() {
     // 1. Check session on mount
     useEffect(() => {
         const checkSession = async () => {
+            // Safety timeout: if checking sessions takes > 5s, 
+            // force stop loading to show the login screen.
+            const timeoutId = setTimeout(() => {
+                setLoading(false);
+            }, 5000);
+
             try {
                 const data = await fetchApi('/auth/me');
                 if (data?.user) {
@@ -78,6 +84,7 @@ export function useProjectManager() {
             } catch (err) {
                 console.error('Session check failed:', err);
             } finally {
+                clearTimeout(timeoutId);
                 setLoading(false);
             }
         };
@@ -153,7 +160,7 @@ export function useProjectManager() {
         return {
             total: relevant.length,
             active: relevant.filter(p => p?.status === PROJECT_STATUS.ACTIVE).length,
-            pending: relevant.filter(p => p?.status === PROJECT_STATUS.PENDING && p?.managerId === user?.userId).length,
+            pending: relevant.filter(p => p?.status === PROJECT_STATUS.PENDING && p?.managerId === user?.id).length,
             roi: relevant.reduce((acc, p) => acc + (p?.actualRoi || 0), 0)
         };
     }, [projects, user]);
@@ -163,7 +170,7 @@ export function useProjectManager() {
         const newProject = {
             ...formData,
             id: `p${Date.now()}`,
-            submitterId: user.userId,
+            submitterId: user.id,
             createdAt: new Date().toISOString().split('T')[0],
             status: isDraft ? PROJECT_STATUS.DRAFT : PROJECT_STATUS.PENDING,
             history: [{
@@ -319,7 +326,7 @@ export function useProjectManager() {
                 method: 'POST',
                 body: JSON.stringify({
                     projectId,
-                    userId: user?.userId,
+                    userId: user?.id,
                     userName: user?.name,
                     text
                 })

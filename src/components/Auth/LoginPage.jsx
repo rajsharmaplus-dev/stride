@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Lock, ArrowRight, Chrome, Sparkles, User, UserCheck, Settings } from 'lucide-react';
+import { ArrowRight, LogIn, ShieldCheck, Globe } from 'lucide-react';
 
 export function LoginPage({ onLogin, error }) {
     const [isLoading, setIsLoading] = useState(false);
@@ -7,7 +7,6 @@ export function LoginPage({ onLogin, error }) {
     // Mock login for development/demo purposes
     const handleMockLogin = (role) => {
         setIsLoading(true);
-        // Map roles to mock users matching initDb.js seeds
         const mockUsers = {
             'Employee': { name: 'Alex Submitter', email: 'alex@company.com', sub: 'google_u1' },
             'Manager': { name: 'Sarah Manager', email: 'sarah@company.com', sub: 'google_u2' },
@@ -15,14 +14,11 @@ export function LoginPage({ onLogin, error }) {
         };
         
         const user = mockUsers[role];
-        
-        // Create a dummy JWT-like string for the backend to decode
         const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, '');
         const payload = btoa(JSON.stringify(user)).replace(/=/g, '');
         const signature = "dummy_signature";
         const credential = `${header}.${payload}.${signature}`;
         
-        // Simulate network delay
         setTimeout(() => {
             onLogin(credential);
             setIsLoading(false);
@@ -30,99 +26,88 @@ export function LoginPage({ onLogin, error }) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden font-sans">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary-600/20 blur-[120px] animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 blur-[120px] animate-pulse" />
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden font-sans">
+            {/* Soft Ambient Background Elements */}
+            <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-[#FF5F2D]/5 blur-[80px]" />
+            <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-slate-200 blur-[80px]" />
             
-            <div className="max-w-md w-full relative z-10 space-y-8 animate-fade-in">
-                {/* Branding */}
-                <div className="text-center space-y-3">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary-500 to-indigo-600 shadow-2xl shadow-primary-500/20 mb-4 group hover:scale-110 transition-transform duration-500">
-                        <Shield className="text-white w-10 h-10 group-hover:rotate-12 transition-transform" />
+            <div className="max-w-md w-full relative z-10 space-y-12 animate-fade-in text-center">
+                {/* Branding Block */}
+                <div className="space-y-8">
+                    <div className="flex justify-center mb-6">
+                        <img 
+                            src="/src/assets/logo.png" 
+                            alt="GlobalLogic Logo" 
+                            className="h-32 w-auto object-contain"
+                        />
                     </div>
-                    <h1 className="text-5xl font-black text-white tracking-tighter italic">STRIDE</h1>
-                    <p className="text-slate-400 font-medium tracking-wide uppercase text-[10px]">Enterprise Project Governance Portal</p>
+                    <div className="flex justify-center">
+                        <div className="w-12 h-1.5 bg-[#FF5F2D] rounded-full" />
+                    </div>
+                    <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-none font-display uppercase">STRIDE</h1>
+                    <p className="text-slate-400 font-bold tracking-[0.25em] uppercase text-[10px]">
+                        Corporate Strategic Governance
+                    </p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
-                    <div className="space-y-6">
-                        <div className="text-center">
-                            <h2 className="text-xl font-bold text-white">Security Checkpoint</h2>
-                            <p className="text-slate-500 text-sm mt-1">Authenticate to access the strategic portfolio</p>
+                <div className="bg-white p-10 md:p-14 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] rounded-[40px] space-y-8 border border-white/50 backdrop-blur-sm">
+                    <div className="space-y-3">
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight font-display">Sign In</h2>
+                        <p className="text-slate-400 text-sm font-medium leading-relaxed">
+                            Access the global initiative landscape with your enterprise account.
+                        </p>
+                    </div>
+
+                    {error && (
+                        <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 italic">
+                            {error}
                         </div>
+                    )}
 
-                        {error && (
-                            <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex items-center gap-3 text-rose-400 text-sm font-bold">
-                                <Lock size={18} />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
+                    <div className="space-y-4">
                         <button
+                            onClick={() => handleMockLogin('Employee')}
                             disabled={isLoading}
-                            className="w-full group relative flex items-center justify-center gap-3 bg-white text-slate-950 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-xl shadow-white/5"
+                            className="w-full group relative flex items-center justify-center gap-3 bg-[#FF5F2D] text-white px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-slate-900 shadow-xl shadow-[#FF5F2D]/20 hover:shadow-slate-900/20 active:scale-95 disabled:opacity-50"
                         >
-                            <Chrome size={18} className="text-primary-600" />
-                            {isLoading ? 'Decrypting Session...' : 'Sign in with Google'}
-                            <ArrowRight size={16} className="absolute right-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all" />
+                            {isLoading ? 'Authenticating...' : 'Continue with Google'}
+                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                         </button>
 
-                        <div className="relative py-4">
-                            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-                            <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black"><span className="px-4 bg-transparent text-slate-600">Development Access</span></div>
+                        <div className="flex items-center gap-4 py-4">
+                            <div className="flex-1 h-px bg-slate-100" />
+                            <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Developer Console</span>
+                            <div className="flex-1 h-px bg-slate-100" />
                         </div>
 
-                        {/* Mock Role Selectors for Dev Environment */}
                         <div className="grid grid-cols-1 gap-3">
-                            <MockRoleButton 
-                                icon={<User size={16} />} 
-                                label="Log in as Employee" 
-                                role="Employee" 
-                                onClick={() => handleMockLogin('Employee')} 
-                                isLoading={isLoading}
-                            />
-                            <MockRoleButton 
-                                icon={<UserCheck size={16} />} 
-                                label="Log in as Manager" 
-                                role="Manager" 
-                                onClick={() => handleMockLogin('Manager')} 
-                                isLoading={isLoading}
-                            />
-                            <MockRoleButton 
-                                icon={<Settings size={16} />} 
-                                label="Log in as Administrator" 
-                                role="Admin" 
-                                onClick={() => handleMockLogin('Admin')} 
-                                isLoading={isLoading}
-                            />
+                            <MockRoleButton label="Employee Sandbox" onClick={() => handleMockLogin('Employee')} isLoading={isLoading} />
+                            <MockRoleButton label="Manager Portal" onClick={() => handleMockLogin('Manager')} isLoading={isLoading} />
+                            <MockRoleButton label="Business Cabinet" onClick={() => handleMockLogin('Admin')} isLoading={isLoading} />
                         </div>
                     </div>
                 </div>
 
-                {/* Footer Info */}
-                <div className="text-center">
-                    <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
-                        <Sparkles size={10} className="text-primary-500" />
-                        Secure Internal Access Only
-                    </p>
+                {/* Footer Seal */}
+                <div className="pt-6 flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-2 text-slate-300">
+                        <Globe size={14} />
+                        <span className="text-[9px] font-bold uppercase tracking-[0.4em]">GlobalLogic Internal</span>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
 
-function MockRoleButton({ icon, label, onClick, isLoading }) {
+function MockRoleButton({ label, onClick, isLoading }) {
     return (
         <button
             onClick={onClick}
             disabled={isLoading}
-            className="flex items-center gap-3 w-full px-5 py-3.5 rounded-2xl bg-white/5 border border-white/5 text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all text-[11px] font-bold uppercase tracking-widest text-left group"
+            className="w-full px-6 py-4 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-center hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95 disabled:opacity-30"
         >
-            <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white transition-colors">
-                {icon}
-            </div>
             {label}
         </button>
     );

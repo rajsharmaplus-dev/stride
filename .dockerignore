@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+dist
+stride.db
+.git
+.gitignore
+.env
+.DS_Store
+README.md
+TEST_PLAN.md
+USER_GUIDE.md
+DEVELOPMENT_GUIDELINES.md
+scripts/
+test-sqlite.js
+package-lock.json (managed by COPY)
