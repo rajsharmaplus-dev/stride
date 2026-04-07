@@ -174,7 +174,7 @@ export function useProjectManager() {
             }],
             actualInvestment: null,
             actualRoi: null,
-            estimatedBenefit: parseFloat(formData.estimatedBenefit) || 0
+            estimatedBenefit: Math.max(0, parseFloat(formData.estimatedBenefit) || 0)
         };
 
         try {
@@ -232,6 +232,7 @@ export function useProjectManager() {
         const roiVal = parseFloat(roi);
 
         if (isNaN(investmentVal) || isNaN(roiVal)) return { success: false, error: 'Invalid financials' };
+        if (investmentVal < 0 || roiVal < 0) return { success: false, error: 'Financials cannot be negative' };
 
         try {
             await fetchApi(`/projects/${projectId}`, {

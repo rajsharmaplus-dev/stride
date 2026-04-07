@@ -315,8 +315,8 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
 
                 {/* Action & Sidebar Panel */}
                 <div className="lg:col-span-4 space-y-6">
-                    {/* Manager Action Block */}
-                    {isManager && p?.status === PROJECT_STATUS.PENDING && (
+                    {/* Manager/Admin Action Block */}
+                    {(isManager || user?.role === 'Admin') && p?.status === PROJECT_STATUS.PENDING && (
                         <div className="bg-white rounded-[2rem] shadow-2xl shadow-amber-500/10 border-t-8 border-amber-400 p-8 space-y-8 animate-fade-in">
                             <div className="flex items-center gap-4">
                                 <div className="bg-amber-50 p-3 rounded-2xl">
@@ -392,8 +392,8 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                         </div>
                     )}
 
-                    {/* Closure Tracking */}
-                    {isOwner && p?.status === PROJECT_STATUS.ACTIVE && (
+                    {/* Closure Tracking (Owner or Admin) */}
+                    {(isOwner || user?.role === 'Admin') && p?.status === PROJECT_STATUS.ACTIVE && (
                         <div className="bg-white rounded-[2rem] shadow-2xl p-8 space-y-6 animate-fade-in border-t-8" style={{ borderTopColor: theme.accent, boxShadow: `0 20px 40px ${theme.accentShadow}` }}>
                             <div className="flex items-center gap-4">
                                 <div className="p-3 rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>

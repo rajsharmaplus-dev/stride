@@ -10,8 +10,7 @@ import {
     LogOut,
     Zap,
     HelpCircle,
-    UserCircle2,
-    ChevronRight
+    UserCircle2
 } from 'lucide-react';
 import { NavItem } from '../Common';
 import { ROLE_THEME } from '../../constants/projectConstants';

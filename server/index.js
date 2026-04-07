@@ -67,6 +67,18 @@ function validateProject(p) {
     if (p.process && !VALID_PROCESSES.includes(p.process)) errors.push(`Invalid process: ${p.process}`);
     if (p.type && !VALID_TYPES.includes(p.type)) errors.push(`Invalid type: ${p.type}`);
     if (p.methodology && !VALID_METHODOLOGIES.includes(p.methodology)) errors.push(`Invalid methodology: ${p.methodology}`);
+    
+    // Numeric Validation
+    if (p.estimatedBenefit !== undefined && (isNaN(p.estimatedBenefit) || parseFloat(p.estimatedBenefit) < 0)) {
+        errors.push('Estimated benefit must be a non-negative number');
+    }
+    if (p.actualInvestment !== undefined && p.actualInvestment !== null && (isNaN(p.actualInvestment) || parseFloat(p.actualInvestment) < 0)) {
+        errors.push('Actual investment must be a non-negative number');
+    }
+    if (p.actualRoi !== undefined && p.actualRoi !== null && (isNaN(p.actualRoi) || parseFloat(p.actualRoi) < 0)) {
+        errors.push('Actual ROI must be a non-negative number');
+    }
+    
     return errors;
 }
 
@@ -231,12 +243,42 @@ app.post('/api/projects', authorize(), (req, res) => {
 // PATCH / update project status or details
 app.patch('/api/projects/:id', authorize(), (req, res) => {
     const { id } = req.params;
-    const { status, note, user, action, actualInvestment, actualRoi, title, summary, process, type, methodology, targetDate, docLink } = req.body;
+    const { status, note, user: userName, action, actualInvestment, actualRoi, title, summary, process, type, methodology, targetDate, docLink } = req.body;
 
     try {
+        const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
+        if (!project) return res.status(404).json({ error: 'Project not found' });
+
+        const sessionUser = req.user;
+        const isAdmin = sessionUser.role === 'Admin';
+        const isOwner = project.submitter_id === sessionUser.userId;
+        const isManager = project.manager_id === sessionUser.userId;
+
+        // --- RBAC Enforcement ---
+        
+        // 1. Review Actions (Status, note, action) require Manager or Admin
+        if (status || action || note) {
+            // Special Case: A submitter can change status to 'Pending Approval' when resubmitting from 'Rework'
+            const isResubmitting = status === 'Pending Approval' && project.status === 'Pending Rework' && isOwner;
+            
+            if (!isManager && !isAdmin && !isResubmitting) {
+                return res.status(403).json({ error: 'Permission denied: Only the assigned manager or an admin can review this project' });
+            }
+        }
+
+        // 2. Structural edits (title, summary, financials) require Owner or Admin
+        if (actualInvestment !== undefined || actualRoi !== undefined || title || summary || process || type || methodology || targetDate || docLink) {
+            if (!isOwner && !isAdmin) {
+                return res.status(403).json({ error: 'Permission denied: Only the project owner or an admin can modify project details or financials' });
+            }
+        }
+
         db.transaction(() => {
             // Sanitization & Validation for updates
-            const validationErrors = validateProject({ status, process, type, methodology });
+            const validationErrors = validateProject({ 
+                status, process, type, methodology, 
+                actualInvestment, actualRoi 
+            });
             if (validationErrors.length > 0) {
                 throw new Error(validationErrors.join(', '));
             }
@@ -266,14 +308,14 @@ app.patch('/api/projects/:id', authorize(), (req, res) => {
 
             if (action) {
                 const insertAudit = db.prepare('INSERT INTO audit_log (project_id, date, user, action, note) VALUES (?, ?, ?, ?, ?)');
-                insertAudit.run(id, new Date().toISOString().split('T')[0], user, action, note || '');
+                insertAudit.run(id, new Date().toISOString().split('T')[0], userName, action, note || '');
             }
         })();
 
         res.json({ message: 'Project updated' });
     } catch (error) {
         console.error('Error updating project:', error);
-        res.status(500).json({ error: 'Database error' });
+        res.status(error.message.includes('Permission denied') ? 403 : 500).json({ error: error.message || 'Database error' });
     }
 });
 
@@ -292,8 +334,8 @@ app.delete('/api/projects/:id', authorize(['Admin']), (req, res) => {
     }
 });
 
-// POST batch delete (Only Admin)
-app.post('/api/projects/batch-delete', authorize(['Admin']), (req, res) => {
+// POST batch delete (Only Admin or Owner of specific subsets)
+app.post('/api/projects/batch-delete', authorize(), (req, res) => {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
         return res.status(400).json({ error: 'Invalid IDs' });
@@ -301,17 +343,30 @@ app.post('/api/projects/batch-delete', authorize(['Admin']), (req, res) => {
 
     try {
         db.transaction(() => {
+            const sessionUser = req.user;
             const deleteLogs = db.prepare('DELETE FROM audit_log WHERE project_id = ?');
-            const deleteProjects = db.prepare('DELETE FROM projects WHERE id = ?');
+            const deleteProject = db.prepare('DELETE FROM projects WHERE id = ?');
+            
             for (const id of ids) {
+                const project = db.prepare('SELECT submitter_id, status FROM projects WHERE id = ?').get(id);
+                if (!project) continue;
+
+                const isAdmin = sessionUser.role === 'Admin';
+                const isOwner = project.submitter_id === sessionUser.userId;
+                const isDeletable = ['Draft', 'Pending Approval', 'Pending Rework'].includes(project.status);
+
+                if (!isAdmin && !(isOwner && isDeletable)) {
+                    throw new Error(`Unauthorized to delete project ${id}`);
+                }
+
                 deleteLogs.run(id);
-                deleteProjects.run(id);
+                deleteProject.run(id);
             }
         })();
         res.json({ message: `${ids.length} projects deleted` });
     } catch (error) {
         console.error('Error in batch delete:', error);
-        res.status(500).json({ error: 'Database error' });
+        res.status(error.message.includes('Unauthorized') ? 403 : 500).json({ error: error.message || 'Database error' });
     }
 });
 
