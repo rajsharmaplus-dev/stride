@@ -438,6 +438,20 @@ app.get('/api/users', authorize(['Admin']), async (req, res) => {
     }
 });
 
+// Limited view for Employees to select a manager
+app.get('/api/users/reviewers', authorize(), async (req, res) => {
+    try {
+        const usersResult = await db.query(
+            'SELECT id, name, role FROM users WHERE role IN ($1, $2) ORDER BY name ASC',
+            ['Manager', 'Admin']
+        );
+        res.json(usersResult.rows);
+    } catch (error) {
+        console.error('Error fetching reviewers:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 app.patch('/api/users/:id/role', authorize(['Admin']), async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;

@@ -96,8 +96,10 @@ export function useProjectManager() {
         
         try {
             // Parallel fetch for speed
+            const usersEndpoint = user.role === 'Admin' ? '/users' : '/users/reviewers';
+            
             const [uData, pData] = await Promise.all([
-                fetchApi('/users'),
+                fetchApi(usersEndpoint),
                 fetchApi(`/projects?limit=${currentLimit}`)
             ]);
             
