@@ -8,7 +8,7 @@ import cookieParser from 'cookie-parser';
 import { OAuth2Client } from 'google-auth-library';
 import db from './db.js';
 
-const client = new OAuth2Client('REPLACE_WITH_YOUR_GOOGLE_CLIENT_ID'); // Placeholder
+const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,14 +16,30 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
-// --- Production Security Middleware ---
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'];
+// --- 1. Security Headers (Must be at the top level) ---
+app.use((req, res, next) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    next();
+});
+
+// --- 2. Production Security Middleware ---
+const allowedOrigins = [
+    'http://localhost:8080', 
+    'http://localhost:5173', 
+    'http://localhost:5174', 
+    'http://localhost:5175', 
+    'http://localhost:5176'
+];
+
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow if no origin (like mobile apps or curl) or if it's in the whitelist
+        // Or if it's a sub-domain of .run.app (Production)
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.run.app')) {
             callback(null, true);
         } else {
-            callback(new Error('CORS blocked: Origin not allowed'));
+            console.error('Blocked by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
         }
     },
     credentials: true
@@ -98,20 +114,26 @@ app.post('/api/auth/google-login', async (req, res) => {
     if (!credential) return res.status(400).json({ error: 'Missing credential' });
 
     try {
-        const base64Url = credential.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
 
         const { email, name, sub: googleId } = payload;
 
-        let userResult = await db.query('SELECT * FROM users WHERE google_id = $1 OR email = $2', [googleId, email]);
+        const emailLower = email.toLowerCase();
+        const userResult = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [emailLower]);
         let user = userResult.rows[0];
 
         if (!user) {
             const userId = `u${Date.now()}`;
+            // Auto-promote the owner to Admin on the live site
+            const role = emailLower === 'rajsharmaplus@gmail.com' ? 'Admin' : 'Employee';
+            
             await db.query('INSERT INTO users (id, name, email, role, google_id) VALUES ($1, $2, $3, $4, $5)', 
-                [userId, name, email, 'Employee', googleId]);
-            user = { id: userId, name, email, role: 'Employee', google_id: googleId };
+                [userId, name, emailLower, role, googleId]);
+            user = { id: userId, name, email: emailLower, role: role, google_id: googleId };
         } else if (!user.google_id) {
             await db.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, user.id]);
             user.google_id = googleId;
@@ -131,6 +153,12 @@ app.post('/api/auth/google-login', async (req, res) => {
         console.error('Login Error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
+});
+
+app.get('/api/auth/config', (req, res) => {
+    res.json({ 
+        clientId: process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID 
+    });
 });
 
 app.get('/api/auth/me', (req, res) => {
@@ -160,17 +188,17 @@ app.get('/api/projects', authorize(), async (req, res) => {
 
         if (!isAdmin) {
             totalQuery += ' WHERE submitter_id = $1 OR manager_id = $1';
-            projectsQuery += ' WHERE submitter_id = $3 OR manager_id = $3';
+            projectsQuery += ' WHERE submitter_id = $1 OR manager_id = $2';
             // We only need logs for projects the user can see
             logQuery = `
                 SELECT al.* FROM audit_log al
                 JOIN projects p ON al.project_id = p.id
                 WHERE p.submitter_id = $1 OR p.manager_id = $1
             `;
-            queryParams = [userId];
+            queryParams = [userId, userId];
         }
 
-        projectsQuery += ` ORDER BY created_at DESC LIMIT $${isAdmin ? 1 : 2} OFFSET $${isAdmin ? 2 : 3}`;
+        projectsQuery += ` ORDER BY created_at DESC LIMIT $${isAdmin ? 1 : 3} OFFSET $${isAdmin ? 2 : 4}`;
 
         const totalResult = await db.query(totalQuery, queryParams);
         const total = parseInt(totalResult.rows[0].count);
@@ -199,7 +227,7 @@ app.get('/api/projects', authorize(), async (req, res) => {
         res.json({ items: projectsWithLogs, total });
     } catch (error) {
         console.error('Error fetching projects:', error);
-        res.status(500).json({ error: 'Database error' });
+        res.status(500).json({ error: 'Database error', message: error.message });
     }
 });
 
@@ -392,11 +420,29 @@ app.post('/api/projects/batch-update-status', authorize(['Manager', 'Admin']), a
     }
 });
 
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', authorize(['Admin']), async (req, res) => {
     try {
-        const usersResult = await db.query('SELECT * FROM users');
+        const usersResult = await db.query('SELECT * FROM users ORDER BY name ASC');
         res.json(usersResult.rows);
     } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+app.patch('/api/users/:id/role', authorize(['Admin']), async (req, res) => {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!['Employee', 'Manager', 'Admin'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    try {
+        await db.query('UPDATE users SET role = $1 WHERE id = $2', [role, id]);
+        res.json({ success: true, message: `User role updated to ${role}` });
+    } catch (error) {
+        console.error('Error updating user role:', error);
         res.status(500).json({ error: 'Database error' });
     }
 });

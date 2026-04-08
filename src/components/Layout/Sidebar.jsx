@@ -72,6 +72,16 @@ function getNavSections(role, stats, activeView, setView, theme) {
                 onClick={() => setView('guide')}
             />
         ),
+        people: (
+            <NavItem
+                key="people"
+                theme={theme}
+                icon={<UserCircle2 size={18} />}
+                label="People & Roles"
+                active={activeView === 'people'}
+                onClick={() => setView('people')}
+            />
+        ),
         governance: (
             <NavItem
                 key="governance"

@@ -29,4 +29,4 @@ EXPOSE 8080
 
 # Start command
 # We run initDb first to ensure schema is ready, then the server
-CMD ["node", "server/initDb.js", "&&", "node", "server/index.js"]
+CMD sh -c "node server/initDb.js && node server/index.js"

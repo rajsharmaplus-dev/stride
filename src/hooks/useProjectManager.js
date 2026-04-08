@@ -337,6 +337,19 @@ export function useProjectManager() {
             return { success: false, error: error.message, isNotFound };
         }
     };
+    
+    const updateUserRole = async (userId, newRole) => {
+        try {
+            await fetchApi(`/users/${userId}/role`, {
+                method: 'PATCH',
+                body: JSON.stringify({ role: newRole })
+            });
+            await fetchData();
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    };
 
     return {
         user,
@@ -357,6 +370,7 @@ export function useProjectManager() {
         batchUpdateProjects,
         fetchComments,
         addComment,
+        updateUserRole,
         loadMore,
         triggerRefresh
     };

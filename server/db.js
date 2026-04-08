@@ -29,12 +29,29 @@ async function query(text, params = []) {
     if (isPostgres) {
         return await pool.query(text, params);
     } else {
-        // SQLite: Convert $1, $2... to ?
-        const sqliteQuery = text.replace(/\$\d+/g, '?');
+        // SQLite: Convert $1, $2... to values by index
+        let sqliteQuery = text;
+        const sortedParams = [];
+        
+        // Find all $n placeholders
+        const placeholders = Array.from(text.matchAll(/\$(\d+)/g));
+        if (placeholders.length > 0) {
+            // We need to replace them one by one to handle duplicates and order
+            // However, better-sqlite3 uses ? or @name.
+            // Let's replace each $n with a ? and build a new params array in that order.
+            sqliteQuery = text.replace(/\$(\d+)/g, (match, p1) => {
+                const index = parseInt(p1) - 1;
+                sortedParams.push(params[index]);
+                return '?';
+            });
+        } else {
+            sortedParams.push(...params);
+        }
+
         const stmt = sqlite.prepare(sqliteQuery);
         
         if (text.trim().toUpperCase().startsWith('SELECT')) {
-            const rows = stmt.all(...params);
+            const rows = stmt.all(...sortedParams);
             return { rows, rowCount: rows.length };
         } else {
             const info = stmt.run(...params);

@@ -1,28 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, LogIn, ShieldCheck, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 export function LoginPage({ onLogin, error }) {
     const [isLoading, setIsLoading] = useState(false);
+    const [dynamicClientId, setDynamicClientId] = useState(null);
+    const [configError, setConfigError] = useState(false);
 
-    // Mock login for development/demo purposes
-    const handleMockLogin = (role) => {
+    useEffect(() => {
+        // Fetch the Client ID from the backend dynamically
+        fetch('/api/auth/config')
+            .then(res => res.json())
+            .then(data => {
+                if (data.clientId && data.clientId !== 'your_google_client_id_here') {
+                    setDynamicClientId(data.clientId);
+                } else {
+                    setConfigError(true);
+                }
+            })
+            .catch(err => {
+                console.error('Failed to fetch Auth config:', err);
+                setConfigError(true);
+            });
+    }, []);
+
+    const handleSuccess = (credentialResponse) => {
         setIsLoading(true);
-        const mockUsers = {
-            'Employee': { name: 'Alex Submitter', email: 'alex@company.com', sub: 'google_u1' },
-            'Manager': { name: 'Sarah Manager', email: 'sarah@company.com', sub: 'google_u2' },
-            'Admin': { name: 'David Business Head', email: 'david@company.com', sub: 'google_u3' }
-        };
-        
-        const user = mockUsers[role];
-        const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, '');
-        const payload = btoa(JSON.stringify(user)).replace(/=/g, '');
-        const signature = "dummy_signature";
-        const credential = `${header}.${payload}.${signature}`;
-        
-        setTimeout(() => {
-            onLogin(credential);
-            setIsLoading(false);
-        }, 800);
+        onLogin(credentialResponse.credential);
+    };
+
+    const handleError = () => {
+        console.error('Google Login Failed');
     };
 
     return (
@@ -36,7 +44,7 @@ export function LoginPage({ onLogin, error }) {
                 <div className="space-y-8">
                     <div className="flex justify-center mb-6">
                         <img 
-                            src="/src/assets/logo.png" 
+                            src="/logo.png" 
                             alt="GlobalLogic Logo" 
                             className="h-32 w-auto object-contain"
                         />
@@ -65,28 +73,32 @@ export function LoginPage({ onLogin, error }) {
                         </div>
                     )}
 
-                    <div className="space-y-4">
-                        <button
-                            onClick={() => handleMockLogin('Employee')}
-                            disabled={isLoading}
-                            className="w-full group relative flex items-center justify-center gap-3 bg-[#FF5F2D] text-white px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-slate-900 shadow-xl shadow-[#FF5F2D]/20 hover:shadow-slate-900/20 active:scale-95 disabled:opacity-50"
-                        >
-                            {isLoading ? 'Authenticating...' : 'Continue with Google'}
-                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                        </button>
-
-                        <div className="flex items-center gap-4 py-4">
-                            <div className="flex-1 h-px bg-slate-100" />
-                            <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Developer Console</span>
-                            <div className="flex-1 h-px bg-slate-100" />
+                    {configError ? (
+                        <div className="bg-orange-50 text-orange-600 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-orange-100 leading-loose">
+                            Authentication Disabled.<br/>
+                            Please configure VITE_GOOGLE_CLIENT_ID in your .env file.
                         </div>
-
-                        <div className="grid grid-cols-1 gap-3">
-                            <MockRoleButton label="Employee Sandbox" onClick={() => handleMockLogin('Employee')} isLoading={isLoading} />
-                            <MockRoleButton label="Manager Portal" onClick={() => handleMockLogin('Manager')} isLoading={isLoading} />
-                            <MockRoleButton label="Business Cabinet" onClick={() => handleMockLogin('Admin')} isLoading={isLoading} />
+                    ) : !dynamicClientId ? (
+                        <div className="text-sm font-bold text-slate-400 animate-pulse">Loading Security Config...</div>
+                    ) : (
+                        <div className="space-y-4 flex flex-col items-center justify-center pt-2">
+                            {isLoading ? (
+                                <div className="text-sm font-bold text-slate-500 animate-pulse">Authenticating...</div>
+                            ) : (
+                                <GoogleOAuthProvider clientId={dynamicClientId}>
+                                    <GoogleLogin
+                                        onSuccess={handleSuccess}
+                                        onError={handleError}
+                                        useFedCM={true}
+                                        useOneTap
+                                        theme="filled_black"
+                                        shape="pill"
+                                        size="large"
+                                    />
+                                </GoogleOAuthProvider>
+                            )}
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Footer Seal */}
@@ -98,17 +110,5 @@ export function LoginPage({ onLogin, error }) {
                 </div>
             </div>
         </div>
-    );
-}
-
-function MockRoleButton({ label, onClick, isLoading }) {
-    return (
-        <button
-            onClick={onClick}
-            disabled={isLoading}
-            className="w-full px-6 py-4 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-center hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95 disabled:opacity-30"
-        >
-            {label}
-        </button>
     );
 }

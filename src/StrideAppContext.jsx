@@ -7,6 +7,7 @@ import { ProjectDetails } from './components/Projects/ProjectDetails';
 import { LoginPage } from './components/Auth/LoginPage';
 import { UserGuide } from './components/Help/UserGuide';
 import { Governance } from './components/Administration/Governance';
+import { PeopleManagement } from './components/Administration/PeopleManagement';
 import { useProjectManager } from './hooks/useProjectManager';
 import { ROLE_THEME, PROJECT_STATUS } from './constants/projectConstants';
 import { BulkActionBar, Toast } from './components/Common';
@@ -478,6 +479,16 @@ export default function App() {
                 projects={projects} 
                 onSelectProject={handleSelectProject} 
               />
+            } />
+
+            <Route path="/people" element={
+              user?.role === 'Admin' ? (
+                <PeopleManagement 
+                  currentUser={user}
+                  users={users}
+                  onUpdateRole={updateUserRole}
+                />
+              ) : <Navigate to="/dashboard" replace />
             } />
 
             <Route path="/details/:id" element={

@@ -85,9 +85,9 @@ async function initDb() {
             console.log('Seeding mock data...');
             
             const MOCK_USERS = [
-                { id: 'u1', name: 'Alex Submitter', email: 'alex@company.com', role: 'Employee', managerId: 'u2' },
-                { id: 'u2', name: 'Sarah Manager', email: 'sarah@company.com', role: 'Manager', managerId: 'u3' },
                 { id: 'u3', name: 'David Business Head', email: 'david@company.com', role: 'Admin', managerId: null },
+                { id: 'u2', name: 'Sarah Manager', email: 'sarah@company.com', role: 'Manager', managerId: 'u3' },
+                { id: 'u1', name: 'Alex Submitter', email: 'alex@company.com', role: 'Employee', managerId: 'u2' },
             ];
 
             for (const u of MOCK_USERS) {
