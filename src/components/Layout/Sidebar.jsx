@@ -121,7 +121,7 @@ function getNavSections(role, stats, activeView, setView, theme) {
     return {
         portfolio: [allNavItems.dashboard, allNavItems.review, allNavItems.closure],
         support: [allNavItems.guide],
-        admin: [allNavItems.governance, allNavItems.settings],
+        admin: [allNavItems.people, allNavItems.governance, allNavItems.settings],
     };
 }
 
