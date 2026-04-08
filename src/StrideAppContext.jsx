@@ -43,6 +43,7 @@ export default function App() {
     batchUpdateStatus,
     fetchComments,
     addComment,
+    updateUserRole,
     loadMore,
     triggerRefresh,
     loading
