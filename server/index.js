@@ -134,9 +134,17 @@ app.post('/api/auth/google-login', async (req, res) => {
             await db.query('INSERT INTO users (id, name, email, role, google_id) VALUES ($1, $2, $3, $4, $5)', 
                 [userId, name, emailLower, role, googleId]);
             user = { id: userId, name, email: emailLower, role: role, google_id: googleId };
-        } else if (!user.google_id) {
-            await db.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, user.id]);
-            user.google_id = googleId;
+        } else {
+            // FORCE PROMOTE owner if they were already in the DB as an Employee
+            if (emailLower === 'rajsharmaplus@gmail.com' && user.role !== 'Admin') {
+                await db.query('UPDATE users SET role = $1 WHERE id = $2', ['Admin', user.id]);
+                user.role = 'Admin';
+            }
+            
+            if (!user.google_id) {
+                await db.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, user.id]);
+                user.google_id = googleId;
+            }
         }
 
         const sessionData = { id: user.id, name: user.name, role: user.role };
