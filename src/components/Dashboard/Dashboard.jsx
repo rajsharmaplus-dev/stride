@@ -47,33 +47,36 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
     const isClosureView = viewContext === 'closure';
 
     return (
-        <div className="space-y-12 animate-fade-in pr-6 relative overflow-hidden font-sans">
+        <div className="space-y-8 animate-fade-in pr-2 relative overflow-hidden font-sans">
             {/* Context Watermark */}
             {WatermarkIcon && (
-                <div className="absolute top-[-40px] right-[-40px] opacity-[0.08] select-none pointer-events-none">
-                    <WatermarkIcon size={320} strokeWidth={1} />
+                <div className="absolute top-[-20px] right-[-20px] opacity-[0.03] select-none pointer-events-none">
+                    <WatermarkIcon size={240} strokeWidth={1} />
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10 border-b border-slate-100 pb-12">
-                <div className="space-y-5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-10 border-b border-slate-100 pb-8">
+                <div className="space-y-3">
                     {!isSubView && (
-                        <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 font-sans">
-                           {greeting}, {user?.name?.split(' ')[0]}
-                        </p>
+                        <div className="flex items-center gap-2">
+                             <div className="w-1 h-3 bg-[#F05A28]/30 rounded-full" />
+                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                                {greeting}, {user?.name?.split(' ')[0]}
+                             </p>
+                        </div>
                     )}
-                    <div className="flex items-center gap-5">
-                        <span className="text-6xl font-black text-[#FF5F2D] italic opacity-10 font-display select-none">{ctx.segment}</span>
-                        <div className="w-1.5 h-12 bg-[#FF5F2D] rounded-full" />
-                        <h1 className="text-6xl font-black text-slate-900 tracking-tighter leading-none font-display">
+                    <div className="flex items-center gap-4">
+                        <span className="text-4xl font-black text-[#F05A28] italic opacity-20 font-display select-none leading-none">{ctx.segment}</span>
+                        <div className="w-1 h-8 bg-[#F05A28] rounded-full" />
+                        <h1 className="text-4xl font-black text-slate-900 tracking-tighter leading-none font-display uppercase">
                             {ctx.label}
                         </h1>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="px-3 py-1 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                            {ctx.segment} Context
+                    <div className="flex items-center gap-3">
+                        <div className="px-2 py-0.5 bg-slate-900 text-white text-[8px] font-black uppercase tracking-widest rounded-md">
+                            {ctx.segment}
                         </div>
-                        <p className="text-[12px] text-slate-400 font-bold uppercase tracking-[0.25em] font-sans">
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.2em]">
                             {typeof ctx?.sub === 'function' ? ctx.sub(projects?.length || 0) : (ctx?.sub || '—')}
                         </p>
                     </div>
@@ -83,8 +86,8 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
             {/* Content Area */}
             {(!isSplitView && !isClosureView) ? (
                 /* 01 - Portfolio Grid */
-                <div className="space-y-10">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <StatCard
                             title="Total Initiatives"
                             value={stats?.total || 0}
@@ -118,124 +121,125 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
                             color="accent"
                         />
                     </div>
-                    <ProjectTable 
-                        projects={projects} totalCount={totalCount} onLoadMore={onLoadMore}
-                        onSelectProject={onSelectProject} onEditProject={onEditProject}
-                        onSelectionChange={onSelectionChange} selectedIds={selectedIds}
-                        theme={theme} currentUser={user}
-                    />
+                    <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0 scrollbar-none">
+                        <ProjectTable 
+                            projects={projects} totalCount={totalCount} onLoadMore={onLoadMore}
+                            onSelectProject={onSelectProject} onEditProject={onEditProject}
+                            onSelectionChange={onSelectionChange} selectedIds={selectedIds}
+                            theme={theme} currentUser={user}
+                        />
+                    </div>
                 </div>
             ) : isSplitView ? (
-                /* 02 - Review Master-Detail (Implemented previously) */
-                <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8 h-[calc(100vh-320px)] relative z-10 transition-all duration-500">
+                /* 02 - Review Master-Detail */
+                <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 lg:h-[calc(100vh-280px)] relative z-10 transition-all duration-500">
                     {/* Master: List */}
-                    <div className="bg-white border border-slate-100 rounded-none shadow-sm flex flex-col overflow-hidden">
-                        <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending Approvals</p>
+                    <div className="bg-white border border-slate-200/60 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Review Pipeline</p>
                         </div>
-                        <div className="flex-1 overflow-y-auto space-y-px custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto space-y-px custom-scrollbar p-1">
                             {projects.map(p => (
                                 <button
                                     key={p.id}
                                     onClick={() => setPreviewProject(p)}
-                                    className={`w-full text-left p-5 transition-all relative group border-b border-slate-50 ${previewProject?.id === p.id ? 'bg-[#FF5F2D]/5' : 'hover:bg-slate-50'}`}
+                                    className={`w-full text-left p-4 transition-all relative group rounded-xl ${previewProject?.id === p.id ? 'bg-[#F05A28]/5' : 'hover:bg-slate-50'}`}
                                 >
-                                    {previewProject?.id === p.id && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#FF5F2D]" />
-                                    )}
                                     <div className="space-y-1">
-                                        <p className={`text-sm font-black tracking-tight ${previewProject?.id === p.id ? 'text-black' : 'text-slate-700'}`}>
+                                        <p className={`text-sm font-bold tracking-tight ${previewProject?.id === p.id ? 'text-[#F05A28]' : 'text-slate-700'}`}>
                                             {p.title}
                                         </p>
-                                        <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                             <span>{p.process}</span>
                                             <div className="w-1 h-1 bg-slate-200 rounded-full" />
-                                            <span>{formatCurrency(p.estimatedBenefit)}</span>
+                                            <span className="text-slate-600">{formatCurrency(p.estimatedBenefit)}</span>
                                         </div>
                                     </div>
-                                    <ChevronRight size={14} className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 transition-all ${previewProject?.id === p.id ? 'translate-x-1 text-[#FF5F2D]' : 'group-hover:translate-x-1'}`} />
+                                    <ChevronRight size={14} className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 transition-all ${previewProject?.id === p.id ? 'translate-x-1 text-[#F05A28]' : 'group-hover:translate-x-1'}`} />
                                 </button>
                             ))}
                         </div>
                     </div>
                     {/* Detail: Preview */}
-                    <div className="bg-white border border-slate-100 rounded-none shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+                    <div className="bg-white border border-slate-200/60 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
                         {previewProject ? (
-                            <div className="flex-1 overflow-y-auto p-12 space-y-10 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
                                 <div className="space-y-4">
                                     <StatusBadge status={previewProject.status} />
-                                    <h2 className="text-4xl font-black text-black tracking-tighter font-display leading-tight">{previewProject.title}</h2>
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-8 border-y border-slate-100">
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Process</p>
-                                            <p className="text-sm font-bold text-slate-900">{previewProject.process}</p>
+                                    <h2 className="text-3xl font-black text-slate-900 tracking-tighter font-display leading-tight">{previewProject.title}</h2>
+                                    <div className="flex flex-wrap gap-6 py-6 border-y border-slate-100">
+                                        <div className="min-w-[120px]">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Process Area</p>
+                                            <p className="text-xs font-bold text-slate-800">{previewProject.process}</p>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Target ROI</p>
-                                            <p className="text-sm font-bold text-slate-900">{formatCurrency(previewProject.estimatedBenefit)}</p>
+                                        <div className="min-w-[120px]">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Strategic Goal</p>
+                                            <p className="text-xs font-bold text-slate-800">{previewProject.strategicGoal || '—'}</p>
+                                        </div>
+                                        <div className="min-w-[120px]">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Estimated ROI</p>
+                                            <p className="text-xs font-bold text-emerald-600">{formatCurrency(previewProject.estimatedBenefit)}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Business Context</p>
-                                    <p className="text-slate-600 leading-relaxed text-sm">{previewProject.description || 'No description provided.'}</p>
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Executive Summary</p>
+                                    <p className="text-slate-600 leading-relaxed text-sm bg-slate-50/50 p-4 rounded-xl border border-slate-100 italic">
+                                        "{previewProject.description || 'No description provided.'}"
+                                    </p>
                                 </div>
-                                <div className="pt-6 border-t border-slate-100 flex gap-4">
+                                <div className="pt-4 flex gap-3">
                                     <button 
                                         onClick={() => onSelectProject(previewProject)}
-                                        className="px-8 py-4 bg-black text-white text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+                                        className="btn-primary !px-8 !py-3 !text-xs"
                                     >
-                                        Open Full Review
+                                        Proceed to Full Review
                                     </button>
                                 </div>
                             </div>
                         ) : (
                             <div className="flex-1 flex flex-col items-center justify-center text-slate-300 p-12">
-                                < ClipboardCheck size={64} strokeWidth={1} className="mb-4 opacity-20" />
-                                <p className="text-xs font-bold uppercase tracking-widest">Select an initiative to begin review</p>
+                                < ClipboardCheck size={48} strokeWidth={1} className="mb-4 opacity-20" />
+                                <p className="text-[10px] font-black uppercase tracking-widest">Select an initiative to begin</p>
                             </div>
                         )}
                     </div>
                 </div>
             ) : (
-                /* 03 - Execution Closure (Linear Timeline View) */
-                <div className="space-y-6 relative z-10">
+                /* 03 - Execution Closure (Compact Timeline) */
+                <div className="space-y-3 relative z-10">
                     {projects.map((p, idx) => (
-                        <div key={p.id} className="group relative flex items-center gap-12 p-8 bg-white border border-slate-100 hover:border-[#FF5F2D]/30 transition-all hover:shadow-xl rounded-none">
-                             {/* Progressive Timeline Marker */}
-                             <div className="flex flex-col items-center">
-                                <div className="text-[11px] font-black text-slate-400 mb-2 font-display">{idx + 1}</div>
-                                <div className="w-px h-12 bg-slate-100" />
-                                <div className="w-12 h-12 rounded-full border-2 border-slate-100 bg-white flex items-center justify-center text-[#FF5F2D] group-hover:border-[#FF5F2D] transition-colors">
-                                    <Target size={20} />
-                                </div>
-                                <div className="w-px h-12 bg-slate-100" />
+                        <div key={p.id} className="group relative flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-4 bg-white border border-slate-100 hover:border-[#F05A28]/30 transition-all hover:shadow-md rounded-xl">
+                             <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:text-[#F05A28] transition-colors border border-slate-100 flex-shrink-0">
+                                 <Target size={18} />
                              </div>
 
-                             <div className="flex-1 grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] items-center gap-8">
-                                <div>
-                                    <h3 className="text-2xl font-black text-black tracking-tight mb-2 group-hover:text-[#FF5F2D] transition-colors font-display">
+                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] items-center gap-4 sm:gap-6">
+                                <div className="min-w-0">
+                                    <h3 className="text-sm font-bold text-slate-900 tracking-tight truncate group-hover:text-[#F05A28] transition-colors">
                                         {p.title}
                                     </h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{p.process} · {p.submitterName}</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                        {p.process} <span className="mx-1 opacity-30">•</span> {p.submitterName}
+                                    </p>
                                 </div>
 
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Execution Status</p>
+                                <div className="sm:text-center md:text-left">
                                     <StatusBadge status={p.status} />
                                 </div>
 
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Target Benefit</p>
-                                    <p className="text-xl font-black text-black font-display tracking-tighter">{formatCurrency(p.estimatedBenefit)}</p>
+                                <div className="hidden md:block">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Target Value</p>
+                                    <p className="text-sm font-black text-slate-900 tracking-tight">{formatCurrency(p.estimatedBenefit)}</p>
                                 </div>
 
                                 <div className="text-right">
                                     <button 
                                         onClick={() => onSelectProject(p)}
-                                        className="px-6 py-3 border-2 border-black text-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-black/5 font-display"
+                                        className="btn-secondary hover:!bg-slate-900 hover:!text-white hover:!border-slate-900 w-full sm:w-auto"
                                     >
-                                        Execute Closure
+                                        Manage
+                                        <ChevronRight size={12} />
                                     </button>
                                 </div>
                              </div>
@@ -243,9 +247,9 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
                     ))}
 
                     {projects.length === 0 && (
-                        <div className="py-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 opacity-60">
-                             <Target size={48} strokeWidth={1} className="mb-4 text-[#FF5F2D]" />
-                             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 font-display">No initiatives currently in execution phase</p>
+                        <div className="py-24 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-3xl opacity-60">
+                             <Target size={40} strokeWidth={1} className="mb-4 text-[#F05A28]" />
+                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No active initiatives in execution</p>
                         </div>
                     )}
                 </div>

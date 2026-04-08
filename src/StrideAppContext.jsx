@@ -22,6 +22,7 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [toast, setToast] = useState(null);
   const transitionTimer = useRef(null);
@@ -314,7 +315,6 @@ export default function App() {
   };
 
 
-
   // Determine which bulk actions to show based on user role and selection
   const hasDraft = selectedProjects.some(p => p.status === PROJECT_STATUS.DRAFT);
   const hasPending = selectedProjects.some(p => p.status === PROJECT_STATUS.PENDING);
@@ -346,22 +346,17 @@ export default function App() {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
         <div className="relative w-24 h-1 bg-slate-100 overflow-hidden mb-6 rounded-full">
-          <div className="absolute top-0 left-0 h-full bg-[#FF5F2D] animate-loading-bar"></div>
+          <div className="absolute top-0 left-0 h-full bg-[#F05A28] animate-loading-bar"></div>
         </div>
-        <h2 className="text-3xl font-black text-black tracking-tighter mb-1 italic">STRIDE</h2>
+        <h2 className="text-3xl font-black text-black tracking-tighter mb-1 italic font-display">STRIDE</h2>
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">Optimizing Portfolio...</p>
       </div>
     );
   }
 
-  // If we are not loading and have no user, and NOT on the login page, 
-  // the useEffect redirection will handle move to /login.
-  // We only show a hard error if we specifically detect a connection failure (optional enhancement).
-
-  // If no user, we render a minimal structure (just Routes) so LoginPage can show
   if (!user) {
     return (
-      <div className="min-h-screen bg-surface-50">
+      <div className="min-h-screen bg-slate-50">
         <Routes>
           <Route path="/login" element={<LoginPage onLogin={login} error={authError} />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
@@ -371,38 +366,64 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen bg-surface-50 ${isTransitioning ? 'role-transition' : ''}`}>
-      <Sidebar
-        user={user}
-        activeView={view}
-        setView={(v) => { navigate(`/${v}`); setEditingProject(null); }}
-        stats={stats}
-        onLogout={handleLogout}
-      />
+    <div className={`flex min-h-screen bg-slate-50 selection:bg-[#F05A28] selection:text-white ${isTransitioning ? 'role-transition' : ''}`}>
+      {/* Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
 
-      <main className="xl:pl-72 min-h-screen pb-32">
-        {/* Mobile header — themed per role */}
-        <header
-          className="sticky top-0 z-10 px-8 py-5 flex justify-between items-center border-b xl:hidden"
-          style={{
-            backgroundColor: theme?.sidebarBg?.includes(',') 
-              ? theme.sidebarBg.split(',')[0].replace('linear-gradient(160deg, ', '') 
-              : theme?.sidebarBg || '#0f172a',
-            borderColor: `${theme?.accent}20`
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-black text-white italic tracking-tighter">STRIDE</span>
+      {/* Sidebar - responsive behavior */}
+      <div className={`fixed inset-y-0 left-0 z-[70] transition-transform duration-300 lg:relative lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <Sidebar 
+          user={user} 
+          activeView={view} 
+          setView={(v) => { navigate(`/${v}`); setIsMobileMenuOpen(false); setEditingProject(null); }} 
+          stats={stats}
+          onLogout={handleLogout} 
+        />
+      </div>
+
+      <main className="flex-1 min-w-0 flex flex-col relative">
+        {/* Desktop Header */}
+        <header className="hidden lg:flex sticky top-0 z-40 h-14 items-center justify-between border-b border-slate-100 bg-white/80 backdrop-blur-md px-8 no-print">
+          <div className="flex items-center gap-4 text-slate-400">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em]">System Engine</h2>
+            <ChevronRight size={14} />
+            <span className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">{location.pathname.substring(1) || 'Dashboard'}</span>
           </div>
           <button
-            onClick={() => handleLogout()}
-            className="p-2 rounded-xl bg-white/10 text-white"
+            onClick={handleLogout}
+            className="p-2 text-slate-400 hover:text-[#F05A28] transition-colors rounded-lg hover:bg-slate-50"
           >
             <LogOut size={18} />
           </button>
         </header>
 
-        <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+        {/* Mobile TopBar */}
+        <header className="lg:hidden sticky top-0 z-40 h-16 flex items-center justify-between px-6 bg-slate-900 text-white no-print">
+            <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  className="p-2 -ml-2 text-white/70 hover:text-white flex flex-col gap-1"
+                >
+                    <div className="w-5 h-0.5 bg-current" />
+                    <div className="w-5 h-0.5 bg-current" />
+                    <div className="w-5 h-0.5 bg-current" />
+                </button>
+                <div className="flex items-center gap-2">
+                    <img src="/logo.png" alt="Stride" className="w-5 h-5 object-contain" />
+                    <span className="text-sm font-black tracking-tighter italic font-display uppercase">STRIDE</span>
+                </div>
+            </div>
+            <button onClick={handleLogout} className="p-2 text-white/50 hover:text-white">
+                <LogOut size={18} />
+            </button>
+        </header>
+
+        <div className="flex-1 max-w-[1600px] w-full mx-auto p-4 md:p-6 lg:p-8 space-y-6">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
@@ -466,13 +487,6 @@ export default function App() {
               />
             } />
 
-            <Route path="/login" element={
-              <LoginPage 
-                onLogin={login} 
-                error={authError} 
-              />
-            } />
-
             <Route path="/guide" element={<UserGuide />} />
 
             <Route path="/governance" element={
@@ -505,6 +519,8 @@ export default function App() {
                 addComment={addComment}
               />
             } />
+
+            <Route path="/login" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
       </main>
@@ -531,7 +547,7 @@ export default function App() {
       {user?.role === 'Employee' && view === 'dashboard' && (
         <button
           onClick={() => navigate('/submit')}
-          className="fixed bottom-8 right-8 z-[60] group flex items-center gap-3 bg-slate-900 text-white pl-5 pr-6 py-4 rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 animate-slide-up"
+          className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-[60] group flex items-center gap-3 bg-slate-900 text-white pl-5 pr-6 py-4 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 animate-slide-up"
           style={{ 
             background: `linear-gradient(135deg, ${theme?.accent || '#6366f1'}, ${theme?.accent || '#6366f1'}dd)`,
             boxShadow: `0 12px 32px ${theme?.accentShadow || 'rgba(0,0,0,0.2)'}`
@@ -540,7 +556,8 @@ export default function App() {
           <div className="bg-white/20 p-1.5 rounded-xl group-hover:rotate-90 transition-transform duration-500">
             <PlusCircle size={18} />
           </div>
-          <span>Launch Initiative</span>
+          <span className="hidden sm:inline">Launch Initiative</span>
+          <span className="sm:hidden">New</span>
         </button>
       )}
 

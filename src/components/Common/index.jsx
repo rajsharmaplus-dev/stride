@@ -3,16 +3,16 @@ import { Download, X, Send, UserPlus, AlertCircle, CheckCircle } from 'lucide-re
 import { PROJECT_STATUS } from '../../constants/projectConstants';
 
 const STATUS_STYLES = {
-    [PROJECT_STATUS.DRAFT]: 'bg-slate-100 text-slate-600 border-slate-200',
-    [PROJECT_STATUS.PENDING]: 'bg-amber-50 text-amber-600 border-amber-200',
-    [PROJECT_STATUS.REWORK]: 'bg-orange-50 text-orange-600 border-orange-200',
-    [PROJECT_STATUS.ACTIVE]: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-    [PROJECT_STATUS.DECLINED]: 'bg-red-50 text-red-600 border-red-200',
-    [PROJECT_STATUS.CLOSED]: 'bg-indigo-50 text-indigo-600 border-indigo-200',
+    [PROJECT_STATUS.DRAFT]: 'bg-slate-50 text-slate-500 border-slate-200',
+    [PROJECT_STATUS.PENDING]: 'bg-amber-50 text-amber-600 border-amber-100',
+    [PROJECT_STATUS.REWORK]: 'bg-orange-50 text-orange-600 border-orange-100',
+    [PROJECT_STATUS.ACTIVE]: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    [PROJECT_STATUS.DECLINED]: 'bg-red-50 text-red-600 border-red-100',
+    [PROJECT_STATUS.CLOSED]: 'bg-indigo-50 text-indigo-600 border-indigo-100',
 };
 
 const STATUS_DOT = {
-    [PROJECT_STATUS.DRAFT]: 'bg-slate-400',
+    [PROJECT_STATUS.DRAFT]: 'bg-slate-300',
     [PROJECT_STATUS.PENDING]: 'bg-amber-400',
     [PROJECT_STATUS.REWORK]: 'bg-orange-400',
     [PROJECT_STATUS.ACTIVE]: 'bg-emerald-400',
@@ -20,79 +20,50 @@ const STATUS_DOT = {
     [PROJECT_STATUS.CLOSED]: 'bg-indigo-400',
 };
 
-const FALLBACK_STYLE = 'bg-slate-50 text-slate-500 border-slate-200';
-
 export function StatusBadge({ status }) {
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${STATUS_STYLES[status] || FALLBACK_STYLE}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[status] || 'bg-slate-400'}`} />
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors ${STATUS_STYLES[status] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+            <span className={`w-1 h-1 rounded-full ${STATUS_DOT[status] || 'bg-slate-300'}`} />
             {status || 'Unknown'}
         </span>
     );
 }
 
-// Color config per stat card variant
-const STAT_COLORS = {
-    default: {
-        iconBg: 'bg-slate-50',
-        iconText: 'text-slate-400',
-        valueShadow: 'text-slate-900',
-    },
-    emerald: {
-        iconBg: 'bg-emerald-50',
-        iconText: 'text-emerald-500',
-        valueShadow: 'text-slate-900',
-    },
-    amber: {
-        iconBg: 'bg-amber-50',
-        iconText: 'text-amber-500',
-        valueShadow: 'text-slate-900',
-    },
-    accent: {
-        iconBg: null, // uses theme accent
-        iconText: 'text-white',
-        valueShadow: null,
-    },
-};
-
 export function StatCard({ title, value, icon, highlight, theme, color = 'default', trend, onClick }) {
-    const c = STAT_COLORS[color] || STAT_COLORS.default;
     const isAccent = color === 'accent';
 
     return (
         <div 
             onClick={onClick}
-            className={`relative bg-white rounded-none p-6 border transition-all duration-300 overflow-hidden group
-            ${isAccent ? 'border-transparent shadow-xl' : 'border-slate-100 shadow-sm'}
-            ${onClick ? 'cursor-pointer hover:shadow-2xl' : ''}
-        `}
-            style={isAccent
-                ? { background: theme?.badgeBg || '#0f172a', boxShadow: `0 8px 32px ${theme?.accentShadow || 'rgba(0,0,0,0.2)'}` }
-                : highlight ? { ringColor: theme?.accent } : {}
-            }
+            className={`relative group overflow-hidden rounded-2xl border transition-all duration-300 ${
+                isAccent 
+                ? 'border-transparent shadow-lg hover:shadow-xl' 
+                : 'border-slate-100 bg-white hover:border-primary-500/30'
+            } ${onClick ? 'cursor-pointer' : ''}`}
+            style={isAccent ? { background: 'linear-gradient(135deg, #F05A28 0%, #d94e1f 100%)' } : {}}
         >
-            {/* ... Glow logic ... */}
-
-            <div className="flex items-start justify-between mb-6">
-                <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${isAccent ? 'text-white/60' : 'text-slate-400'}`}>{title}</p>
-                <div
-                    className={`p-2.5 rounded-none ${c.iconBg || ''}`}
-                    style={isAccent ? { backgroundColor: 'rgba(255,255,255,0.15)' } : highlight ? { backgroundColor: `${theme?.accentMuted}` } : {}}
-                >
-                    <span className={c.iconText} style={highlight && !isAccent ? { color: theme?.accent } : {}}>
-                        {icon}
-                    </span>
+            <div className="p-4 relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${isAccent ? 'text-white/60' : 'text-slate-400'}`}>
+                        {title}
+                    </p>
+                    <div className={`p-1.5 rounded-lg ${isAccent ? 'bg-white/20 text-white' : 'bg-slate-50 text-slate-400 group-hover:text-primary-500'}`}>
+                        {React.cloneElement(icon, { size: 14 })}
+                    </div>
+                </div>
+                <div className="flex items-end gap-2">
+                    <p className={`text-2xl font-black font-display tracking-tight leading-none ${isAccent ? 'text-white' : 'text-slate-900'}`}>
+                        {value}
+                    </p>
+                    {trend && (
+                        <span className={`text-[9px] font-bold mb-0.5 ${isAccent ? 'text-white/40' : 'text-slate-300'}`}>
+                            {trend}
+                        </span>
+                    )}
                 </div>
             </div>
-
-            <p className={`text-4xl font-black tracking-tighter font-display ${isAccent ? 'text-white' : c.valueShadow}`}>
-                {value}
-            </p>
-
-            {trend && (
-                <p className={`text-[10px] font-bold mt-2 uppercase tracking-widest ${isAccent ? 'text-white/50' : 'text-slate-400'}`}>{trend}</p>
-            )}
-
+            {/* Background accent line */}
+            <div className={`absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isAccent ? 'bg-white/30' : 'bg-primary-500'}`} />
         </div>
     );
 }
@@ -101,28 +72,25 @@ export function NavItem({ icon, label, active, onClick, count, theme }) {
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center justify-between group px-6 py-5 relative transition-all duration-200 ${active
-                ? 'text-white bg-white/5'
-                : `text-[#BCBEC0] hover:text-white hover:bg-white/5`
-                }`}
+            className="w-full flex items-center justify-between group px-3 py-2 rounded-lg transition-all duration-200 relative overflow-hidden"
         >
-            {/* Active Vertical Marker */}
-            {active && (
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#FF5F2D] shadow-[2px_0_15px_rgba(255,95,45,0.5)]" />
-            )}
-
-            <div className="flex items-center gap-4">
-                <span className={`${active ? 'text-[#FF5F2D]' : `text-[#BCBEC0] group-hover:text-[#FF5F2D]`} transition-colors`}>
-                    {icon}
+            {/* Background Hover Effect */}
+            <div className={`absolute inset-0 transition-opacity duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 bg-white/5'}`}
+                 style={active ? { background: theme.navActive } : {}} />
+            
+            <div className="flex items-center gap-3 relative z-10">
+                <span className={`transition-colors duration-200 ${active ? 'text-white' : 'text-white/30 group-hover:text-white'}`}>
+                    {React.cloneElement(icon, { size: 16 })}
                 </span>
-                <span className={`text-[11px] uppercase tracking-[0.25em] ${active ? 'font-black' : 'font-bold'}`}>
+                <span className={`text-xs tracking-tight transition-colors duration-200 ${active ? 'text-white font-bold' : 'text-white/60 font-medium group-hover:text-white'}`}>
                     {label}
                 </span>
             </div>
+            
             {count > 0 && (
-                <span
-                    className={`text-[10px] font-black px-2.5 py-0.5 rounded-none text-white ${active ? 'bg-[#FF5F2D]' : 'bg-white/10'}`}
-                >
+                <span className={`relative z-10 text-[9px] font-black px-1.5 py-0.5 rounded-md transition-all ${
+                    active ? 'bg-white text-[#F05A28]' : 'bg-white/10 text-white/40 group-hover:text-white'
+                }`}>
                     {count}
                 </span>
             )}
@@ -132,16 +100,15 @@ export function NavItem({ icon, label, active, onClick, count, theme }) {
 
 export function DetailItem({ label, value, icon: Icon }) {
     return (
-        <div className="space-y-2">
+        <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/50 border border-slate-100/50">
             <div className="flex items-center gap-2">
-                {Icon && <Icon size={12} className="text-slate-400" />}
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{label}</span>
+                {Icon && <Icon size={12} className="text-slate-300" />}
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
             </div>
-            <p className="text-sm font-semibold text-slate-800 leading-tight">{value || '—'}</p>
+            <p className="text-sm font-bold text-slate-800 leading-tight">{value || '—'}</p>
         </div>
     );
 }
-
 
 export function BulkActionBar({ 
   count, 
@@ -150,76 +117,50 @@ export function BulkActionBar({
   onApprove, 
   onDecline, 
   onClose,
+  onSubmit,
+  onReassign,
   theme, 
   isLoading = false,
   showDelete = false,
   showApproval = false,
-  showClosing = false
+  showClosing = false,
+  showSubmit = false,
+  showReassign = false
 }) {
   if (count === 0) return null;
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-fade-in translate-y-0">
-      <div className="bg-black/95 backdrop-blur-xl border border-white/10 px-8 py-5 rounded-none shadow-2xl flex items-center gap-8 min-w-fit whitespace-nowrap">
-        <div className="flex items-center gap-4 pr-8 border-r border-white/10">
-          <div 
-            className="w-10 h-10 rounded-none flex items-center justify-center text-white text-xs font-black"
-            style={{ backgroundColor: theme?.accent }}
-          >
-            {count}
-          </div>
-          <div className="text-left">
-            <p className="text-[10px] text-[#BCBEC0] font-black uppercase tracking-[0.2em] leading-none">Selected</p>
-            <p className="text-xs text-white font-black uppercase tracking-widest mt-1.5">Initiatives</p>
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in translate-y-0 w-full max-w-4xl px-6">
+      <div className="bg-slate-900 shadow-2xl border border-white/10 p-2 rounded-2xl flex items-center justify-between backdrop-blur-md">
+        <div className="flex items-center gap-4 px-4">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#F05A28]">Bulk Selection</span>
+            <span className="text-white text-xs font-bold">{count} Initiatives selected</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onExport}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/5 rounded-none text-white text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white hover:text-black"
-          >
-            <Download size={14} />
-            {isLoading ? '...' : 'Export'}
-          </button>
-          
+        <div className="flex items-center gap-2">
+          {showSubmit && (
+             <button onClick={onSubmit} disabled={isLoading} className="btn-primary">Submit Batch</button>
+          )}
           {showApproval && (
-            <>
-              <button 
-                onClick={onApprove}
-                disabled={isLoading}
-                className="px-6 py-3 bg-emerald-600 text-white rounded-none text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110"
-              >
-                Approve
-              </button>
-              <button 
-                onClick={onDecline}
-                disabled={isLoading}
-                className="px-6 py-3 bg-red-600 text-white rounded-none text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110"
-              >
-                Decline
-              </button>
-            </>
+            <div className="flex gap-1.5 mr-2 pr-2 border-r border-white/10">
+              <button onClick={onApprove} disabled={isLoading} className="btn-primary !bg-emerald-600">Approve</button>
+              <button onClick={onDecline} disabled={isLoading} className="btn-primary !bg-red-600">Decline</button>
+            </div>
           )}
-
+          {showReassign && (
+             <button onClick={onReassign} disabled={isLoading} className="btn-secondary !bg-transparent !text-white !border-white/20">Reassign</button>
+          )}
           {showClosing && (
-            <button 
-              onClick={onClose}
-              disabled={isLoading}
-              className="px-6 py-3 bg-[#4442E3] text-white rounded-none text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 shadow-lg shadow-blue-500/20"
-            >
-              Close
-            </button>
+             <button onClick={onClose} disabled={isLoading} className="btn-primary !bg-indigo-600">Close Out</button>
           )}
-          
+          <button onClick={onExport} disabled={isLoading} className="p-2 text-white/60 hover:text-white transition-colors">
+            <Download size={18} />
+          </button>
           {showDelete && (
-            <button 
-              onClick={onDelete}
-              disabled={isLoading}
-              className="px-4 py-3 bg-red-600/10 border border-red-600/20 text-red-500 rounded-none text-[10px] font-black uppercase tracking-widest transition-all hover:bg-red-600 hover:text-white"
-            >
-              <X size={14} />
+            <button onClick={onDelete} disabled={isLoading} className="p-2 text-red-400 hover:text-red-300 transition-colors">
+              <X size={18} />
             </button>
           )}
         </div>
@@ -229,23 +170,18 @@ export function BulkActionBar({
 }
 
 export function Toast({ message, type = 'success', onClose }) {
-  React.useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
   const styles = {
-    success: 'bg-[#FF5F2D] text-white',
-    error: 'bg-red-600 text-white',
-    info: 'bg-[#4442E3] text-white'
+    success: 'border-emerald-500/20 bg-emerald-50 text-emerald-700',
+    error: 'border-red-500/20 bg-red-50 text-red-700',
+    info: 'border-blue-500/20 bg-blue-50 text-blue-700'
   };
 
   return (
-    <div className={`fixed top-8 right-8 z-[100] flex items-center justify-between min-w-[320px] px-8 py-5 rounded-none shadow-2xl animate-fade-in ${styles[type]}`}>
-      <div className="flex items-center gap-4">
-        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{message}</span>
-      </div>
-      <button onClick={onClose} className="hover:scale-110 transition-transform">
+    <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-3 rounded-2xl shadow-xl border animate-fade-in ${styles[type]}`}>
+      {type === 'success' && <CheckCircle size={16} />}
+      {type === 'error' && <AlertCircle size={16} />}
+      <span className="text-xs font-black uppercase tracking-widest">{message}</span>
+      <button onClick={onClose} className="ml-4 opacity-40 hover:opacity-100">
         <X size={14} />
       </button>
     </div>

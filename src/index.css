@@ -4,113 +4,97 @@
 
 
 @theme {
-    --color-primary-50: #fff5f2;
-    --color-primary-100: #ffe8e3;
-    --color-primary-500: #FF5F2D;
-    --color-primary-600: #e55529;
-    --color-primary-700: #cc4c24;
+    /* GlobalLogic Brand Palette (Official) */
+    --gl-orange: #F05A28;
+    --gl-navy: #0F172A;
+    --gl-slate-50: #F8FAFC;
+    --gl-slate-100: #F1F5F9;
+    --gl-slate-200: #E2E8F0;
+    --gl-slate-300: #CBD5E1;
+    --gl-slate-400: #94A3B8;
+    --gl-slate-500: #64748B;
+    
+    /* Functional Overrides */
+    --color-primary-500: var(--gl-orange);
+    --color-primary-600: #D94E1F;
+    --color-surface-50: var(--gl-slate-50);
+    --color-surface-900: var(--gl-navy);
 
-    --color-surface-50: #fcfcfc;
-    --color-surface-100: #f4f4f4;
-    --color-surface-200: #e6e7e8;
-
-    --color-accent-blue: #4442E3;
-
-    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+    
+    /* Compact Spacing System */
+    --spacing-main: 1.5rem;
+    --spacing-card: 1rem;
+    --spacing-item: 0.5rem;
 }
 
 @layer base {
     html {
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
+        font-size: 14px; /* Even smaller for extreme compactness */
     }
 
-    h1, h2, h3, .font-display {
-        font-family: var(--font-display);
-        letter-spacing: -0.05em;
-    }
-}
-
-@layer base {
     body {
-        @apply bg-surface-50 text-slate-900 antialiased tracking-tight;
-        font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+        @apply bg-surface-50 text-slate-900 antialiased overflow-x-hidden;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(240, 90, 40, 0.03) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(15, 23, 42, 0.03) 0px, transparent 50%);
+        background-attachment: fixed;
     }
 
-    /* Branding bar for corporate identity */
+    /* Professional Top Branding Line */
     body::before {
         content: '';
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: #FF5F2D;
-        z-index: 100;
+        height: 2px;
+        background: var(--gl-orange);
+        z-index: 1000;
     }
 }
 
 @layer components {
-    .glass-card {
-        @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+    .gl-card {
+        @apply bg-white border border-slate-200/50 shadow-[0_2px_12px_rgba(0,0,0,0.03)] rounded-xl transition-all duration-300;
+    }
+
+    .gl-card-hover {
+        @apply hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:border-primary-500/20;
     }
 
     .btn-primary {
-        @apply bg-primary-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-all duration-300 active:scale-95 shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40;
+        @apply bg-primary-500 text-white px-4 py-1.5 rounded-lg font-bold hover:bg-primary-600 transition-all duration-200 active:scale-95 shadow-lg shadow-primary-500/10 text-[10px] uppercase tracking-widest flex items-center justify-center gap-2;
     }
 
     .btn-secondary {
-        @apply bg-white text-slate-700 border border-slate-200 px-6 py-2.5 rounded-xl font-semibold hover:bg-slate-50 transition-all duration-300 active:scale-95;
+        @apply bg-slate-50 text-slate-600 border border-slate-200 px-4 py-1.5 rounded-lg font-bold hover:bg-slate-100 transition-all duration-200 text-[10px] uppercase tracking-widest flex items-center justify-center gap-2;
     }
-}
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
+    .input-compact {
+        @apply w-full bg-slate-50/50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all placeholder:text-slate-400;
+    }
 
-::-webkit-scrollbar-track {
-    @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+    .label-compact {
+        @apply text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block;
+    }
 }
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes loadingBar {
-    0% { left: -100%; width: 30%; }
-    50% { left: 0%; width: 60%; }
-    100% { left: 100%; width: 100%; }
-}
-
 .animate-fade-in {
-    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.animate-loading-bar {
-    position: absolute;
-    height: 100%;
-    animation: loadingBar 2s infinite ease-in-out;
-}
-
-/* Role switch transition — a short flash + fade for intuitive session awareness */
-@keyframes roleFlash {
-    0%   { opacity: 1; }
-    20%  { opacity: 0.15; transform: scale(0.995); }
-    100% { opacity: 1; transform: scale(1); }
+    animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .role-transition {
-    animation: roleFlash 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeIn 0.4s reverse;
 }
 
 /* Sidebar smooth color transition */

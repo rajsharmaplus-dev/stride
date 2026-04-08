@@ -48,38 +48,37 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="gl-card overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="px-5 py-3 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/30">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl" style={{ backgroundColor: theme?.accentMuted || '#f1f5f9' }}>
-                        <FileSpreadsheet size={16} style={{ color: theme?.accent || '#64748b' }} />
+                    <div className="p-1.5 rounded-lg bg-[#F05A28]/10">
+                        <FileSpreadsheet size={14} className="text-[#F05A28]" />
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-slate-800 tracking-tight">Project Portfolio</h2>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                            {filtered.length} of {totalCount || projects?.length || 0} records {selectedIds.length > 0 && `· ${selectedIds.length} selected`}
+                        <h2 className="text-[11px] font-black text-slate-900 uppercase tracking-widest leading-none">Initiative Inventory</h2>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                            {filtered.length} of {totalCount || projects?.length || 0} Records {selectedIds.length > 0 && `· ${selectedIds.length} Selected`}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 w-full md:w-auto">
-                    <div className="relative group flex-1 md:w-72">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-500 transition-colors" size={14} />
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <div className="relative group w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#F05A28] transition-colors" size={12} />
                         <input
                             type="text"
-                            placeholder="Search initiatives..."
-                            className="pl-9 pr-9 py-2.5 bg-slate-50 border border-transparent rounded-xl w-full focus:ring-2 outline-none transition-all text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:bg-white focus:border-slate-200"
-                            style={{ ['--tw-ring-color']: theme?.accentMuted }}
+                            placeholder="Find records..."
+                            className="input-compact !pl-9 !py-1.5 !text-xs"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600"
                             >
-                                <X size={13} />
+                                <X size={12} />
                             </button>
                         )}
                     </div>
@@ -87,34 +86,32 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto relative">
+            <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-slate-50/60 border-b border-slate-100">
-                            <th className="pl-6 pr-2 py-3.5 w-10">
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                        checked={filtered.length > 0 && selectedIds.length === filtered.length}
-                                        onChange={handleSelectAll}
-                                        style={{ accentColor: theme?.accent }}
-                                    />
-                                </div>
+                        <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="pl-6 pr-2 py-3 w-10">
+                                <input
+                                    type="checkbox"
+                                    className="w-3.5 h-3.5 rounded border-slate-300 transition-colors cursor-pointer"
+                                    checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                                    onChange={handleSelectAll}
+                                    style={{ accentColor: '#F05A28' }}
+                                />
                             </th>
-                            <th className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                                <SortBtn label="Initiative" k="title" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
+                            <th className="px-4 py-3">
+                                <SortBtn label="Title" k="title" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                                <SortBtn label="Governance" k="process" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
+                            <th className="px-6 py-3">
+                                <SortBtn label="Process" k="process" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                            <th className="px-6 py-3">
                                 <SortBtn label="Status" k="status" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                                <SortBtn label="Est. Value" k="estimatedBenefit" sortKey={sortKey} theme={theme} toggleSort={toggleSort} />
+                            <th className="px-6 py-3">
+                                <SortBtn label="Estimated ROI" k="estimatedBenefit" sortKey={sortKey} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 text-right">
+                            <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">
                                 Actions
                             </th>
                         </tr>
@@ -127,92 +124,71 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
                             return (
                                 <tr
                                     key={project?.id}
-                                    className={`group transition-all duration-150 ${isSelected ? 'bg-slate-50/90' : 'hover:bg-slate-50/50'} cursor-pointer`}
+                                    className={`group transition-colors duration-100 ${isSelected ? 'bg-[#F05A28]/5' : 'hover:bg-slate-50/80'} cursor-pointer`}
                                     onClick={() => onSelectProject(project)}
                                 >
-                                    <td className="pl-6 pr-2 py-4" onClick={(e) => e.stopPropagation()}>
+                                    <td className="pl-6 pr-2 py-2.5" onClick={(e) => e.stopPropagation()}>
                                         <input
                                             type="checkbox"
-                                            className="w-4 h-4 rounded border-slate-300 focus:ring-offset-0 cursor-pointer transition-transform active:scale-90"
+                                            className="w-3.5 h-3.5 rounded border-slate-300 cursor-pointer"
                                             checked={isSelected}
                                             onChange={(e) => toggleSelect(e, project?.id)}
-                                            style={{ accentColor: theme?.accent }}
+                                            style={{ accentColor: '#F05A28' }}
                                         />
                                     </td>
-                                    <td className="px-4 py-4 max-w-xs">
+                                    <td className="px-4 py-2.5 max-w-xs">
                                         <div className="flex items-center gap-2">
-                                            <p className="font-bold text-slate-900 text-sm truncate group-hover:text-slate-700 transition-colors">
+                                            <p className="font-bold text-slate-900 text-xs truncate">
                                                 {project?.title || 'Untitled'}
                                             </p>
                                             {isOwner && (
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); onEditProject(project); }}
-                                                    className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white hover:shadow-sm transition-all"
-                                                    title="Edit Project"
+                                                    className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white border border-transparent hover:border-slate-200 transition-all shadow-sm"
                                                 >
-                                                    <Edit2 size={12} style={{ color: theme?.accent }} />
+                                                    <Edit2 size={10} className="text-[#F05A28]" />
                                                 </button>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-1.5 mt-1">
-                                            <Tag size={9} className="text-slate-300" />
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{project?.type || '—'}</p>
-                                        </div>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{project?.type || 'Standard'}</p>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-xs font-bold text-slate-700">{project?.process || '—'}</p>
-                                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{project?.methodology || '—'}</p>
+                                    <td className="px-6 py-2.5">
+                                        <p className="text-[11px] font-bold text-slate-700">{project?.process || 'Operations'}</p>
+                                        <p className="text-[9px] text-slate-400 font-medium mt-0.5">{project?.methodology || 'Lean'}</p>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-2.5">
                                         <StatusBadge status={project?.status} />
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-sm font-bold text-slate-900">{formatCurrency(project?.estimatedBenefit)}</p>
+                                    <td className="px-6 py-2.5">
+                                        <p className="text-xs font-black text-slate-900">{formatCurrency(project?.estimatedBenefit)}</p>
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            <Calendar size={9} className="text-slate-300" />
-                                            <p className="text-[10px] text-slate-400 font-bold">{project?.targetDate || '—'}</p>
+                                            <Calendar size={8} className="text-slate-300" />
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase">{project?.targetDate || 'Q4 2024'}</p>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="p-2 hover:bg-white hover:shadow-md rounded-lg text-slate-400 hover:text-indigo-600 transition-all group-hover:translate-x-1">
-                                            <ChevronRight size={16} />
-                                        </button>
+                                    <td className="px-6 py-2.5 text-right">
+                                        <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="p-1.5 rounded-lg bg-white border border-slate-200 shadow-sm text-slate-400 group-hover:text-[#F05A28]">
+                                                <ChevronRight size={14} />
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             );
                         })}
                     </tbody>
                 </table>
-
-                {filtered.length === 0 && (
-                    <div className="py-24 flex flex-col items-center justify-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center">
-                            <Search size={24} className="text-slate-200" />
-                        </div>
-                        <div className="text-center">
-                            <p className="text-sm font-bold text-slate-400">
-                                {searchTerm ? `No results for "${searchTerm}"` : 'No records found'}
-                            </p>
-                            {searchTerm && (
-                                <button onClick={() => setSearchTerm('')} className="text-xs font-bold mt-2 hover:underline" style={{ color: theme?.accent }}>
-                                    Clear search
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Pagination / Load More */}
             {projects.length < totalCount && (
-                <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
+                <div className="p-4 border-t border-slate-50 flex justify-center bg-slate-50/20">
                     <button
                         onClick={onLoadMore}
-                        className="group flex items-center gap-3 px-8 py-3 bg-white border border-slate-200 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:shadow-xl shadow-slate-200/50 transition-all active:scale-95"
+                        className="btn-secondary !rounded-full !px-6"
                     >
-                        <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-                        Load More Results
-                        <span className="text-slate-300 lowercase font-bold tracking-tight">({projects.length} of {totalCount})</span>
+                        <RefreshCw size={12} className="group-hover:rotate-180 transition-transform duration-500" />
+                        Load {totalCount - projects.length} More
                     </button>
                 </div>
             )}
@@ -222,9 +198,9 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
 
 function SortBtn({ label, k, sortKey, theme, toggleSort }) {
     return (
-        <button onClick={() => toggleSort(k)} className="flex items-center gap-1 group hover:text-slate-700 transition-colors">
+        <button onClick={() => toggleSort(k)} className="flex items-center gap-1.5 group text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
             {label}
-            <ArrowUpDown size={10} className={`${sortKey === k ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'} transition-opacity`} style={sortKey === k ? { color: theme?.accent } : {}} />
+            <ArrowUpDown size={10} className={`${sortKey === k ? 'opacity-100' : 'opacity-20 group-hover:opacity-50'} transition-opacity`} style={sortKey === k ? { color: '#F05A28' } : {}} />
         </button>
     );
 }

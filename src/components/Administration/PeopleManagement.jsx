@@ -18,128 +18,99 @@ export function PeopleManagement({ currentUser, users, onUpdateRole }) {
         setUpdatingUserId(null);
         
         if (result.success) {
-            setMessage({ text: 'Role updated successfully', type: 'success' });
+            setMessage({ text: 'Access Updated', type: 'success' });
             setTimeout(() => setMessage(null), 3000);
         } else {
-            setMessage({ text: result.error || 'Failed to update role', type: 'error' });
-        }
-    };
-
-    const getRoleIcon = (role) => {
-        switch (role) {
-            case 'Admin': return <Shield size={14} />;
-            case 'Manager': return <Briefcase size={14} />;
-            default: return <User size={14} />;
+            setMessage({ text: result.error || 'Update Failed', type: 'error' });
         }
     };
 
     return (
-        <div className="space-y-10 animate-fade-in pr-6 relative overflow-hidden font-sans">
-            {/* Context Watermark */}
-            <div className="absolute top-[-40px] right-[-40px] opacity-[0.05] select-none pointer-events-none text-slate-900">
-                <Users size={320} strokeWidth={1} />
-            </div>
-
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10 border-b border-slate-100 pb-12">
-                <div className="space-y-5">
-                    <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 font-sans">
-                        System Administration
-                    </p>
-                    <div className="flex items-center gap-5">
-                        <span className="text-6xl font-black text-[#FF5F2D] italic opacity-10 font-display select-none">04</span>
-                        <div className="w-1.5 h-12 bg-[#FF5F2D] rounded-full" />
-                        <h1 className="text-6xl font-black text-slate-900 tracking-tighter leading-none font-display">
-                            PEOPLE
-                        </h1>
+        <div className="space-y-6 animate-fade-in pr-6 pb-10">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-1.5 rounded-lg bg-[#F05A28]/10 text-[#F05A28]">
+                        <Users size={16} />
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="px-3 py-1 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                            Governance Mode
-                        </div>
-                        <p className="text-[12px] text-slate-400 font-bold uppercase tracking-[0.25em] font-sans">
-                            Manage user privileges and organization roles
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase leading-none">
+                            Identity Governance
+                        </h1>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                            System Access Control & Privilege Management · {users.length} Total Users
                         </p>
                     </div>
                 </div>
 
-                {message && (
-                    <div className={`px-6 py-3 rounded-xl flex items-center gap-3 animate-slide-up border ${
-                        message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'
-                    }`}>
-                        {message.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                        <span className="text-xs font-black uppercase tracking-widest">{message.text}</span>
-                    </div>
-                )}
-            </div>
-
-            <div className="relative z-10 space-y-6">
-                {/* Search & Actions */}
-                <div className="flex flex-col md:flex-row items-center gap-4 bg-white p-4 border border-slate-100">
-                    <div className="relative flex-1 group">
-                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#FF5F2D] transition-colors" />
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    {message && (
+                        <div className={`px-3 py-1.5 rounded-lg flex items-center gap-2 animate-slide-up border ${
+                            message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'
+                        }`}>
+                            <CheckCircle2 size={12} />
+                            <span className="text-[9px] font-black uppercase tracking-widest">{message.text}</span>
+                        </div>
+                    )}
+                    <div className="relative group w-full md:w-64">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#F05A28] transition-colors" />
                         <input 
                             type="text" 
-                            placeholder="SEARCH BY NAME OR EMAIL..."
-                            className="w-full bg-slate-50 border-none pl-12 pr-6 py-4 text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-[#FF5F2D]/20 outline-none transition-all placeholder:text-slate-300"
+                            placeholder="Find User..."
+                            className="input-compact !pl-9 !text-xs"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
+            </div>
 
-                {/* Users Table */}
-                <div className="bg-white border border-slate-100 overflow-hidden">
+            {/* Users Table */}
+            <div className="gl-card overflow-hidden">
+                <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100 text-left">
-                                <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Identity</th>
-                                <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Account Type</th>
-                                <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Privilege Management</th>
+                                <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">User Profile</th>
+                                <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Current Rank</th>
+                                <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Access Management</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {filteredUsers.map(u => {
-                                const theme = ROLE_THEME[u.role] || ROLE_THEME['Employee'];
                                 const isSelf = u.id === currentUser?.id;
                                 
                                 return (
-                                    <tr key={u.id} className="group hover:bg-slate-50/50 transition-all">
-                                        <td className="p-6">
-                                            <div className="flex items-center gap-4">
-                                                <div 
-                                                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black text-white shadow-lg"
-                                                    style={{ background: theme.badgeBg }}
-                                                >
+                                    <tr key={u.id} className="group hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-[10px] font-black text-white shadow-sm ring-2 ring-white">
                                                     {u.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1">
-                                                        {u.name} {isSelf && <span className="text-[10px] font-black text-[#FF5F2D] uppercase ml-2">(You)</span>}
+                                                    <p className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-2">
+                                                        {u.name}
+                                                        {isSelf && <span className="text-[8px] bg-[#F05A28]/10 text-[#F05A28] px-1.5 py-0.5 rounded font-black uppercase">Me</span>}
                                                     </p>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                                                         {u.email}
                                                     </p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-6">
-                                            <div 
-                                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border"
-                                                style={{ backgroundColor: theme.pillBg, color: theme.pillText, borderColor: `${theme.accent}30` }}
-                                            >
-                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.dotColor }} />
-                                                {getRoleIcon(u.role)}
-                                                {u.role}
+                                        <td className="px-6 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <StatusBadge status={u.role} />
                                             </div>
                                         </td>
-                                        <td className="p-6">
+                                        <td className="px-6 py-3 text-right">
                                             {isSelf ? (
-                                                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Protected Admin Account</p>
+                                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest px-2 py-1 rounded-md border border-dashed border-slate-200">Full System Root</span>
                                             ) : (
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <select
                                                         disabled={updatingUserId === u.id}
-                                                        className="bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg focus:ring-2 focus:ring-[#FF5F2D]/20 outline-none cursor-pointer disabled:opacity-50"
+                                                        className="input-compact !w-auto !py-1 !px-3 !text-[10px] font-black uppercase tracking-widest cursor-pointer disabled:opacity-50"
                                                         value={u.role}
                                                         onChange={(e) => handleRoleChange(u.id, e.target.value)}
                                                     >
@@ -147,9 +118,6 @@ export function PeopleManagement({ currentUser, users, onUpdateRole }) {
                                                         <option value="Manager">Manager</option>
                                                         <option value="Admin">Admin</option>
                                                     </select>
-                                                    {updatingUserId === u.id && (
-                                                        <div className="w-4 h-4 border-2 border-[#FF5F2D] border-t-transparent rounded-full animate-spin" />
-                                                    )}
                                                 </div>
                                             )}
                                         </td>
@@ -158,14 +126,14 @@ export function PeopleManagement({ currentUser, users, onUpdateRole }) {
                             })}
                         </tbody>
                     </table>
-                    
-                    {filteredUsers.length === 0 && (
-                        <div className="py-20 flex flex-col items-center justify-center text-slate-300">
-                            <Search size={48} strokeWidth={1} className="mb-4 opacity-50" />
-                            <p className="text-xs font-bold uppercase tracking-[0.2em]">No users found matching your search</p>
-                        </div>
-                    )}
                 </div>
+                
+                {filteredUsers.length === 0 && (
+                    <div className="py-20 flex flex-col items-center justify-center text-slate-300">
+                        <Search size={32} strokeWidth={1.5} className="mb-3 opacity-20" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Identity Not Found</p>
+                    </div>
+                )}
             </div>
         </div>
     );

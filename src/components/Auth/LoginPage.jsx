@@ -8,7 +8,6 @@ export function LoginPage({ onLogin, error }) {
     const [configError, setConfigError] = useState(false);
 
     useEffect(() => {
-        // Fetch the Client ID from the backend dynamically
         fetch('/api/auth/config')
             .then(res => res.json())
             .then(data => {
@@ -34,78 +33,88 @@ export function LoginPage({ onLogin, error }) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden font-sans">
-            {/* Soft Ambient Background Elements */}
-            <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-[#FF5F2D]/5 blur-[80px]" />
-            <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-slate-200 blur-[80px]" />
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden font-sans select-none">
+            {/* Ambient Background */}
+            <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#F05A28]/5 blur-[120px]" />
+            <div className="absolute bottom-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-slate-200/50 blur-[120px]" />
             
             <div className="max-w-md w-full relative z-10 space-y-12 animate-fade-in text-center">
                 {/* Branding Block */}
-                <div className="space-y-8">
-                    <div className="flex justify-center mb-6">
+                <div className="space-y-6">
+                    <div className="flex justify-center mb-4">
                         <img 
                             src="/logo.png" 
                             alt="GlobalLogic Logo" 
-                            className="h-32 w-auto object-contain"
+                            className="h-24 w-auto object-contain"
                         />
                     </div>
-                    <div className="flex justify-center">
-                        <div className="w-12 h-1.5 bg-[#FF5F2D] rounded-full" />
+                    <div>
+                        <h1 className="text-6xl font-black text-slate-900 tracking-tighter leading-none font-display uppercase">STRIDE</h1>
+                        <p className="text-[#F05A28] font-black tracking-[0.5em] uppercase text-[9px] mt-3">
+                            Corporate Strategic Governance
+                        </p>
                     </div>
-                    <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-none font-display uppercase">STRIDE</h1>
-                    <p className="text-slate-400 font-bold tracking-[0.25em] uppercase text-[10px]">
-                        Corporate Strategic Governance
-                    </p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white p-10 md:p-14 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] rounded-[40px] space-y-8 border border-white/50 backdrop-blur-sm">
-                    <div className="space-y-3">
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight font-display">Sign In</h2>
-                        <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                            Access the global initiative landscape with your enterprise account.
+                <div className="bg-white p-12 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.12)] rounded-[48px] space-y-8 border border-white relative overflow-hidden">
+                    <div className="relative z-10 space-y-3">
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">Authentication</h2>
+                        <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-relaxed">
+                            Enterprise Login Required
                         </p>
                     </div>
 
                     {error && (
-                        <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 italic">
+                        <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 italic">
                             {error}
                         </div>
                     )}
 
                     {configError ? (
                         <div className="bg-orange-50 text-orange-600 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-orange-100 leading-loose">
-                            Authentication Disabled.<br/>
-                            Please configure VITE_GOOGLE_CLIENT_ID in your .env file.
+                            Security Error: Config Missing.<br/>
+                            Contact Site Admin.
                         </div>
                     ) : !dynamicClientId ? (
-                        <div className="text-sm font-bold text-slate-400 animate-pulse">Loading Security Config...</div>
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-6 h-6 border-2 border-[#F05A28] border-t-transparent rounded-full animate-spin" />
+                            <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest">Validating Infrastructure...</span>
+                        </div>
                     ) : (
                         <div className="space-y-4 flex flex-col items-center justify-center pt-2">
                             {isLoading ? (
-                                <div className="text-sm font-bold text-slate-500 animate-pulse">Authenticating...</div>
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                    <span className="text-[10px] font-black uppercase text-emerald-500 tracking-widest">Identifying Session...</span>
+                                </div>
                             ) : (
                                 <GoogleOAuthProvider clientId={dynamicClientId}>
-                                    <GoogleLogin
-                                        onSuccess={handleSuccess}
-                                        onError={handleError}
-                                        useFedCM={true}
-                                        useOneTap
-                                        theme="filled_black"
-                                        shape="pill"
-                                        size="large"
-                                    />
+                                    <div className="transition-transform active:scale-95 duration-200">
+                                        <GoogleLogin
+                                            onSuccess={handleSuccess}
+                                            onError={handleError}
+                                            useFedCM={true}
+                                            theme="filled_blue"
+                                            shape="circle"
+                                            size="large"
+                                            text="continue_with"
+                                        />
+                                    </div>
                                 </GoogleOAuthProvider>
                             )}
                         </div>
                     )}
+
+                    {/* Decorative line */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#F05A28] to-transparent opacity-30" />
                 </div>
 
                 {/* Footer Seal */}
-                <div className="pt-6 flex flex-col items-center gap-4">
-                    <div className="flex items-center gap-2 text-slate-300">
+                <div className="pt-6 flex flex-col items-center gap-4 opacity-30 group">
+                    <div className="flex items-center gap-3 text-slate-400">
                         <Globe size={14} />
-                        <span className="text-[9px] font-bold uppercase tracking-[0.4em]">GlobalLogic Internal</span>
+                        <span className="text-[9px] font-black uppercase tracking-[0.6em]">Internal Network Secure</span>
                     </div>
                 </div>
             </div>

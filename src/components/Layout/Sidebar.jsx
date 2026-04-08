@@ -128,91 +128,85 @@ function getNavSections(role, stats, activeView, setView, theme) {
 export function Sidebar({ user, activeView, setView, stats, onLogout }) {
     const theme = ROLE_THEME[user?.role] || ROLE_THEME['Employee'];
     const sections = getNavSections(user?.role, stats, activeView, setView, theme);
-    const initials = (user?.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
     return (
-        <aside
-            className="sidebar-themed fixed left-0 top-0 bottom-0 w-72 text-white hidden xl:flex flex-col p-6 z-20 shadow-2xl"
-            style={{ background: theme.sidebarBg }}
-        >
-            {/* Logo */}
-            <div className="flex flex-col mb-12 px-2">
-                <div className="w-10 h-1 bg-[#FF5F2D] mb-4" />
-                <h1 className="text-2xl font-black tracking-tighter leading-none italic text-white">STRIDE</h1>
-                <p className="text-[9px] font-bold tracking-[0.4em] uppercase text-[#BCBEC0] mt-2">
-                    Digital Governance
-                </p>
+        <aside className="w-64 h-full flex flex-col sidebar-themed shadow-2xl overflow-hidden border-r border-white/5"
+            style={{ background: theme.sidebarBg }}>
+            
+            {/* Branding Accent */}
+            <div className="h-0.5 w-full bg-[#F05A28]" />
+
+            {/* Logo Section */}
+            <div className="p-5 pb-2">
+                <div className="flex items-center gap-3">
+                    <div className="p-1.5 rounded-lg bg-white/10 group-hover:bg-[#F05A28]/20 transition-colors">
+                        <img src="/logo.png" alt="Stride" className="w-6 h-6 object-contain" />
+                    </div>
+                    <div>
+                        <h1 className="text-lg font-black tracking-tighter italic leading-none select-none">STRIDE</h1>
+                        <p className="text-[7.5px] font-black uppercase tracking-[0.5em] text-[#F05A28] mt-1.5">Governance Platform</p>
+                    </div>
+                </div>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 flex flex-col overflow-y-auto pr-2 custom-scrollbar space-y-6">
-                <div>
-                    <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-4 px-4">
-                        01 / Core Portfolio
+            {/* Navigation Sections */}
+            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4 custom-scrollbar">
+                {/* Core Portfolio */}
+                <div className="space-y-1">
+                    <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mb-2 px-3">
+                        01 — Portfolio
                     </p>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                         {sections.portfolio}
                     </div>
                 </div>
 
+                {/* Admin/Governance Section */}
                 {sections.admin.length > 0 && (
-                    <div>
-                        <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-4 px-4">
-                            02 / Governance
+                    <div className="space-y-1">
+                        <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mb-2 px-3">
+                            02 — Governance
                         </p>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                             {sections.admin}
                         </div>
                     </div>
                 )}
 
-                {sections.support.length > 0 && (
-                    <div className="pt-6 border-t border-white/5">
-                        <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-4 px-4">
-                            03 / Systems
-                        </p>
-                        <div className="space-y-1">
-                            {sections.support}
-                        </div>
+                {/* Support Section */}
+                <div className="space-y-1">
+                    <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mb-2 px-3">
+                        03 — Support
+                    </p>
+                    <div className="space-y-0.5">
+                        {sections.support}
                     </div>
-                )}
+                </div>
             </nav>
 
-            {/* Role Identity Card */}
-            <div className="mt-auto pt-5 border-t border-white/10">
-                {/* Prominent Role Badge */}
-                <div
-                    className="rounded-2xl p-4 mb-3 border border-white/10"
-                    style={{ background: 'rgba(255,255,255,0.04)' }}
-                >
+            {/* User Profile Footer */}
+            <div className="p-3 bg-black/20 border-t border-white/5 space-y-3">
+                <div className="rounded-xl p-3 border border-white/5 bg-white/5 space-y-3">
                     {/* Role pill */}
-                    <div
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 border"
-                        style={{
-                            backgroundColor: theme.pillBg,
-                            color: theme.pillText,
-                            borderColor: `${theme.accent}30`
-                        }}
-                    >
-                        <span
-                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: theme.dotColor }}
-                        />
-                        {theme.roleLabel}
+                    <div className="flex items-center justify-between">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[8px] font-black uppercase tracking-widest"
+                             style={{ color: theme.pillText }}>
+                            <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: theme.dotColor }} />
+                            {theme.roleLabel}
+                        </div>
+                        <Zap size={10} className="text-[#F05A28] opacity-50" />
                     </div>
 
                     {/* Avatar + Name */}
-                    <div className="flex items-center gap-3 mb-1">
-                        <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0 shadow-lg"
-                            style={{ background: theme.badgeBg, boxShadow: `0 4px 14px ${theme.accentShadow}` }}
-                        >
-                            {initials}
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black text-white flex-shrink-0 shadow-lg"
+                            style={{ background: theme.badgeBg }}>
+                            {(user?.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs font-black text-white truncate">{user?.name}</p>
-                            <p className="text-[9px] font-medium truncate mt-0.5" style={{ color: theme.pillText }}>
-                                {theme.roleDesc}
+                            <p className="text-[11px] font-black text-white truncate leading-none">{user?.name}</p>
+                            <p className="text-[8px] font-bold truncate mt-1 uppercase tracking-tighter opacity-40">
+                                {user?.email}
                             </p>
                         </div>
                     </div>
@@ -221,21 +215,10 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
                 {/* Logout button */}
                 <button
                     onClick={onLogout}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border"
-                    style={{
-                        backgroundColor: theme.accentMuted,
-                        color: theme.pillText,
-                        borderColor: `${theme.accent}30`,
-                    }}
-                    onMouseEnter={e => {
-                        e.currentTarget.style.backgroundColor = `${theme.accent}30`;
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.backgroundColor = theme.accentMuted;
-                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border border-white/10 hover:bg-white/5 hover:text-white text-white/60"
                 >
                     <LogOut size={12} />
-                    Sign Out
+                    System Exit
                 </button>
             </div>
         </aside>
