@@ -55,7 +55,7 @@ const apiLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser(process.env.SESSION_SECRET || 'stride_default_development_secret_key_123!'));
 
 const PORT = process.env.PORT || 3001;
 
@@ -93,7 +93,9 @@ function validateProject(p) {
 // --- RBAC Authorization Middleware ---
 function authorize(allowedRoles = []) {
     return (req, res, next) => {
-        const session = req.cookies.stride_session ? JSON.parse(req.cookies.stride_session) : null;
+        // Use signedCookies to prevent client-side tampering
+        const sessionStr = req.signedCookies.stride_session;
+        const session = sessionStr ? JSON.parse(sessionStr) : null;
         
         if (!session || !session.id || !session.role) {
             return res.status(401).json({ error: 'Authentication required' });
@@ -153,7 +155,8 @@ app.post('/api/auth/google-login', async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            signed: true
         });
 
         res.json({ success: true, user: sessionData });
@@ -170,7 +173,8 @@ app.get('/api/auth/config', (req, res) => {
 });
 
 app.get('/api/auth/me', (req, res) => {
-    const session = req.cookies.stride_session ? JSON.parse(req.cookies.stride_session) : null;
+    const sessionStr = req.signedCookies.stride_session;
+    const session = sessionStr ? JSON.parse(sessionStr) : null;
     if (!session) return res.json({ user: null });
     res.json({ user: session });
 });
@@ -283,7 +287,7 @@ app.post('/api/projects', authorize(), async (req, res) => {
 
 app.patch('/api/projects/:id', authorize(), async (req, res) => {
     const { id } = req.params;
-    const { status, note, user: userName, action, actualInvestment, actualRoi, title, summary, process, type, methodology, targetDate, docLink } = req.body;
+    const { status, note, user: userName, action, actualInvestment, actualRoi, title, summary, process, type, methodology, targetDate, docLink, estimatedBenefit } = req.body;
 
     try {
         const projectResult = await db.query('SELECT * FROM projects WHERE id = $1', [id]);
@@ -302,7 +306,7 @@ app.patch('/api/projects/:id', authorize(), async (req, res) => {
             }
         }
 
-        if (actualInvestment !== undefined || actualRoi !== undefined || title || summary || process || type || methodology || targetDate || docLink) {
+        if (actualInvestment !== undefined || actualRoi !== undefined || title || summary || process || type || methodology || targetDate || docLink || estimatedBenefit !== undefined) {
             if (!isOwner && !isAdmin) {
                 return res.status(403).json({ error: 'Permission denied: Only the project owner or an admin can modify project details or financials' });
             }
@@ -311,7 +315,7 @@ app.patch('/api/projects/:id', authorize(), async (req, res) => {
         await db.transaction(async (client) => {
             const validationErrors = validateProject({ 
                 status, process, type, methodology, 
-                actualInvestment, actualRoi 
+                actualInvestment, actualRoi, estimatedBenefit
             });
             if (validationErrors.length > 0) {
                 throw new Error(validationErrors.join(', '));
@@ -326,15 +330,21 @@ app.patch('/api/projects/:id', authorize(), async (req, res) => {
                     [actualInvestment, actualRoi, id]);
             }
 
-            if (title) {
-                const sanitizedTitle = sanitize(title);
-                const sanitizedSummary = sanitize(summary);
+            if (title || estimatedBenefit !== undefined) {
+                const sanitizedTitle = title ? sanitize(title) : undefined;
+                const sanitizedSummary = summary ? sanitize(summary) : undefined;
                 await client.query(`
                     UPDATE projects SET 
-                        title = $1, summary = $2, process = $3, type = $4, 
-                        methodology = $5, target_date = $6, doc_link = $7 
-                    WHERE id = $8
-                `, [sanitizedTitle, sanitizedSummary, process, type, methodology, targetDate, docLink, id]);
+                        title = COALESCE($1, title), 
+                        summary = COALESCE($2, summary), 
+                        process = COALESCE($3, process), 
+                        type = COALESCE($4, type), 
+                        methodology = COALESCE($5, methodology), 
+                        target_date = COALESCE($6, target_date), 
+                        doc_link = COALESCE($7, doc_link),
+                        estimated_benefit = COALESCE($8, estimated_benefit)
+                    WHERE id = $9
+                `, [sanitizedTitle, sanitizedSummary, process, type, methodology, targetDate, docLink, estimatedBenefit, id]);
             }
 
             if (action) {
@@ -427,6 +437,43 @@ app.post('/api/projects/batch-update-status', authorize(['Manager', 'Admin']), a
         res.status(500).json({ error: 'Database error' });
     }
 });
+app.post('/api/projects/batch-update', authorize(['Manager', 'Admin']), async (req, res) => {
+    const { ids, updates, user, action, note } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0 || !updates) {
+        return res.status(400).json({ error: 'Invalid input' });
+    }
+
+    try {
+        await db.transaction(async (client) => {
+            const date = new Date().toISOString().split('T')[0];
+
+            for (const id of ids) {
+                const projectResult = await client.query('SELECT manager_id FROM projects WHERE id = $1', [id]);
+                if (projectResult.rowCount === 0) continue;
+                
+                const p = projectResult.rows[0];
+                if (req.user.role !== 'Admin' && req.user.id !== p.manager_id) {
+                    throw new Error(`Unauthorized to modify project ${id}`);
+                }
+                
+                if (updates.manager_id) {
+                    await client.query('UPDATE projects SET manager_id = $1 WHERE id = $2', [updates.manager_id, id]);
+                }
+                
+                await client.query(
+                    db.isPostgres
+                        ? 'INSERT INTO audit_log (project_id, date, "user", action, note) VALUES ($1, $2, $3, $4, $5)'
+                        : 'INSERT INTO audit_log (project_id, date, user, action, note) VALUES ($1, $2, $3, $4, $5)',
+                    [id, date, user, action || 'Updated', note || '']
+                );
+            }
+        });
+        res.json({ message: `${ids.length} projects updated` });
+    } catch (error) {
+        console.error('Error in batch update:', error);
+        res.status(error.message.includes('Unauthorized') ? 403 : 500).json({ error: error.message || 'Database error' });
+    }
+});
 
 app.get('/api/users', authorize(['Admin']), async (req, res) => {
     try {
@@ -472,6 +519,13 @@ app.patch('/api/users/:id/role', authorize(['Admin']), async (req, res) => {
 app.get('/api/projects/:id/comments', authorize(), async (req, res) => {
     const { id } = req.params;
     try {
+        const projectResult = await db.query('SELECT submitter_id, manager_id FROM projects WHERE id = $1', [id]);
+        if (projectResult.rowCount === 0) return res.status(404).json({ error: 'Project not found' });
+        const p = projectResult.rows[0];
+        if (req.user.role !== 'Admin' && req.user.id !== p.submitter_id && req.user.id !== p.manager_id) {
+            return res.status(403).json({ error: 'Permission denied: You do not have access to this project' });
+        }
+
         const commentsResult = await db.query('SELECT * FROM comments WHERE project_id = $1 ORDER BY timestamp ASC', [id]);
         res.json(commentsResult.rows);
     } catch (error) {
@@ -487,6 +541,13 @@ app.post('/api/comments', authorize(), async (req, res) => {
     }
 
     try {
+        const projectResult = await db.query('SELECT submitter_id, manager_id FROM projects WHERE id = $1', [projectId]);
+        if (projectResult.rowCount === 0) return res.status(404).json({ error: 'Project not found' });
+        const p = projectResult.rows[0];
+        if (req.user.role !== 'Admin' && req.user.id !== p.submitter_id && req.user.id !== p.manager_id) {
+            return res.status(403).json({ error: 'Permission denied: You do not have access to this project' });
+        }
+
         const sanitizedText = sanitize(text);
         const timestamp = new Date().toISOString();
         await db.query(
