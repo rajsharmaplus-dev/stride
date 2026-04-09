@@ -23,24 +23,24 @@
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
     
-    /* Compact Spacing System */
+    /* Improved Spacing & Sizing */
     --spacing-main: 1.5rem;
-    --spacing-card: 1rem;
-    --spacing-item: 0.5rem;
+    --spacing-card: 1.25rem;
+    --spacing-item: 0.75rem;
 }
 
 @layer base {
     html {
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
-        font-size: 14px; /* Even smaller for extreme compactness */
+        font-size: 16px; /* Base 16px for better legibility */
     }
 
     body {
         @apply bg-surface-50 text-slate-900 antialiased overflow-x-hidden;
         background-image: 
-            radial-gradient(at 0% 0%, rgba(240, 90, 40, 0.03) 0px, transparent 50%),
-            radial-gradient(at 100% 0%, rgba(15, 23, 42, 0.03) 0px, transparent 50%);
+            radial-gradient(at 0% 0%, rgba(240, 90, 40, 0.02) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(15, 23, 42, 0.02) 0px, transparent 50%);
         background-attachment: fixed;
     }
 

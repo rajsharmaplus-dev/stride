@@ -143,8 +143,8 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
                         <img src="/logo.png" alt="Stride" className="w-6 h-6 object-contain" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-black tracking-tighter italic leading-none select-none">STRIDE</h1>
-                        <p className="text-[7.5px] font-black uppercase tracking-[0.5em] text-[#F05A28] mt-1.5">Governance Platform</p>
+                        <h1 className="text-2xl font-black tracking-tighter italic leading-none select-none text-white">STRIDE</h1>
+                        <p className="text-[11px] font-black uppercase tracking-[0.5em] text-[#F05A28] mt-1.5 opacity-90">Governance Platform</p>
                     </div>
                 </div>
             </div>
@@ -153,7 +153,7 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
             <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4 custom-scrollbar">
                 {/* Core Portfolio */}
                 <div className="space-y-1">
-                    <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mb-2 px-3">
+                    <p className="text-[11px] font-black text-white/50 uppercase tracking-[0.4em] mb-2 px-3">
                         01 — Portfolio
                     </p>
                     <div className="space-y-0.5">
@@ -164,7 +164,7 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
                 {/* Admin/Governance Section */}
                 {sections.admin.length > 0 && (
                     <div className="space-y-1">
-                        <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mb-2 px-3">
+                        <p className="text-[11px] font-black text-white/50 uppercase tracking-[0.4em] mb-2 px-3">
                             02 — Governance
                         </p>
                         <div className="space-y-0.5">
@@ -175,7 +175,7 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
 
                 {/* Support Section */}
                 <div className="space-y-1">
-                    <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mb-2 px-3">
+                    <p className="text-[11px] font-black text-white/50 uppercase tracking-[0.4em] mb-2 px-3">
                         03 — Support
                     </p>
                     <div className="space-y-0.5">
@@ -189,9 +189,9 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
                 <div className="rounded-xl p-3 border border-white/5 bg-white/5 space-y-3">
                     {/* Role pill */}
                     <div className="flex items-center justify-between">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[8px] font-black uppercase tracking-widest"
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest"
                              style={{ color: theme.pillText }}>
-                            <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: theme.dotColor }} />
+                            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: theme.dotColor }} />
                             {theme.roleLabel}
                         </div>
                         <Zap size={10} className="text-[#F05A28] opacity-50" />
@@ -204,8 +204,8 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
                             {(user?.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[11px] font-black text-white truncate leading-none">{user?.name}</p>
-                            <p className="text-[8px] font-bold truncate mt-1 uppercase tracking-tighter opacity-40">
+                            <p className="text-[14px] font-black text-white truncate leading-none">{user?.name}</p>
+                            <p className="text-[11px] font-bold truncate mt-1.5 uppercase tracking-tight opacity-70">
                                 {user?.email}
                             </p>
                         </div>
@@ -215,9 +215,9 @@ export function Sidebar({ user, activeView, setView, stats, onLogout }) {
                 {/* Logout button */}
                 <button
                     onClick={onLogout}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border border-white/10 hover:bg-white/5 hover:text-white text-white/60"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 border border-white/10 hover:bg-white/5 hover:text-white text-white/60"
                 >
-                    <LogOut size={12} />
+                    <LogOut size={14} />
                     System Exit
                 </button>
             </div>

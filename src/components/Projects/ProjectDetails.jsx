@@ -94,7 +94,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
     const submitterName = users.find(u => u.id === p?.submitterId)?.name || 'Unknown User';
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-20 font-sans pr-4">
+        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-10 font-sans pr-4">
             <button
                 onClick={onBack}
                 className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-[9px] uppercase tracking-[0.3em] transition-all group"
@@ -106,7 +106,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Main Content Card */}
                 <div className="lg:col-span-8 gl-card bg-white overflow-hidden shadow-2xl shadow-slate-200">
-                    <div className="p-8 space-y-10">
+                    <div className="p-6 space-y-8">
                         <header className="space-y-6">
                             <div className="flex flex-wrap items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
@@ -133,15 +133,15 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Submitted by <span className="text-slate-900">{submitterName}</span></p>
+                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Submitted by <span className="text-slate-900">{submitterName}</span></p>
                                     </div>
                                     <div className="w-px h-2 bg-slate-200" />
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Established {p?.createdAt || '—'}</p>
+                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Established {p?.createdAt || '—'}</p>
                                 </div>
                             </div>
                         </header>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-2 bg-slate-50/30 rounded-3xl border border-slate-100">
                             <DetailItem label="Process" value={p?.process} icon={Layers} />
                             <DetailItem label="Category" value={p?.type} icon={Activity} />
                             <DetailItem label="Methodology" value={p?.methodology} icon={Target} />
@@ -149,20 +149,20 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                         </div>
 
                         <section className="space-y-3">
-                            <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                 <div className="w-1 h-3 bg-[#F05A28] rounded-full" />
                                 Executive Charter
                             </h3>
-                            <div className="text-slate-700 leading-relaxed text-[13px] bg-white p-6 rounded-2xl border border-slate-100 font-medium">
+                            <div className="text-slate-700 leading-relaxed text-[15px] bg-white p-6 rounded-2xl border border-slate-100 font-medium">
                                 {p?.summary || <span className="text-slate-400 italic">No summary provided.</span>}
                             </div>
                         </section>
 
                         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-3">
-                                <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Expected Outcome</h3>
+                                <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Expected Outcome</h3>
                                 <div className="p-6 rounded-3xl text-white relative overflow-hidden group shadow-xl" style={{ background: theme.sidebarBg }}>
-                                    <p className="text-[8px] font-black uppercase tracking-widest mb-1 opacity-60">Estimated Annual Benefit</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-60">Estimated Annual Benefit</p>
                                     <p className="text-3xl font-black tracking-tighter text-white">
                                         {formatCurrency(p?.estimatedBenefit)}
                                     </p>
@@ -172,23 +172,23 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
 
                             {(p?.status === PROJECT_STATUS.ACTIVE || p?.status === PROJECT_STATUS.CLOSED) && (
                                 <div className="space-y-3">
-                                    <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Financial Performance</h3>
+                                    <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Financial Performance</h3>
                                     <div className={`p-6 rounded-3xl border-2 transition-all min-h-[100px] flex flex-col justify-center ${p?.status === PROJECT_STATUS.CLOSED ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100 border-dashed'}`}>
                                         {p?.status === PROJECT_STATUS.CLOSED ? (
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1">Total Investment</p>
+                                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Total Investment</p>
                                                     <p className="text-xl font-black text-slate-900">{formatCurrency(p?.actualInvestment)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1">Net Realized ROI</p>
+                                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Net Realized ROI</p>
                                                     <p className="text-xl font-black text-slate-900">{formatCurrency(p?.actualRoi)}</p>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-2 text-slate-300 italic">
                                                 <Activity size={18} className="animate-pulse" />
-                                                <p className="text-[9px] font-black uppercase tracking-widest">Awaiting Value Milestone</p>
+                                                <p className="text-[11px] font-black uppercase tracking-widest">Awaiting Value Milestone</p>
                                             </div>
                                         )}
                                     </div>
@@ -254,8 +254,8 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                     {(isManager || user?.role === 'Admin') && p?.status === PROJECT_STATUS.PENDING && (
                         <div className="bg-white rounded-3xl shadow-xl shadow-amber-500/5 border border-amber-100 p-6 space-y-6 animate-fade-in">
                             <div className="flex items-center gap-3">
-                                <div className="bg-amber-50 p-2 rounded-xl">
-                                    <AlertCircle size={20} className="text-amber-500" />
+                                <div className="bg-[#F05A28]/5 p-2 rounded-xl">
+                                    <ShieldX size={20} className="text-[#F05A28]" />
                                 </div>
                                 <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Governance Review</h3>
                             </div>
@@ -271,7 +271,7 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                 <button
                                     onClick={() => handleUpdateStatus(PROJECT_STATUS.ACTIVE, comment || 'Baseline Approved')}
                                     disabled={isSubmitting}
-                                    className="btn-primary w-full !py-3 !text-[10px] font-black uppercase !bg-emerald-600 border-none"
+                                    className="btn-primary w-full !py-3 !text-[10px] font-black uppercase !bg-[#F05A28] border-none shadow-[#F05A28]/20"
                                 >
                                     Approve Baseline
                                 </button>

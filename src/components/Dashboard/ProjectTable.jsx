@@ -56,8 +56,8 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
                         <FileSpreadsheet size={14} className="text-[#F05A28]" />
                     </div>
                     <div>
-                        <h2 className="text-[11px] font-black text-slate-900 uppercase tracking-widest leading-none">Initiative Inventory</h2>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                        <h2 className="text-[13px] font-black text-slate-900 uppercase tracking-widest leading-none">Initiative Inventory</h2>
+                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-1">
                             {filtered.length} of {totalCount || projects?.length || 0} Records {selectedIds.length > 0 && `· ${selectedIds.length} Selected`}
                         </p>
                     </div>
@@ -111,7 +111,7 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
                             <th className="px-6 py-3">
                                 <SortBtn label="Estimated ROI" k="estimatedBenefit" sortKey={sortKey} theme={theme} toggleSort={toggleSort} />
                             </th>
-                            <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">
+                            <th className="px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-500 text-right">
                                 Actions
                             </th>
                         </tr>
@@ -124,7 +124,7 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
                             return (
                                 <tr
                                     key={project?.id}
-                                    className={`group transition-colors duration-100 ${isSelected ? 'bg-[#F05A28]/5' : 'hover:bg-slate-50/80'} cursor-pointer`}
+                                    className={`group transition-colors duration-75 ${isSelected ? 'bg-[#F05A28]/10' : 'hover:bg-slate-100/60'} cursor-pointer`}
                                     onClick={() => onSelectProject(project)}
                                 >
                                     <td className="pl-6 pr-2 py-2.5" onClick={(e) => e.stopPropagation()}>
@@ -138,7 +138,7 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
                                     </td>
                                     <td className="px-4 py-2.5 max-w-xs">
                                         <div className="flex items-center gap-2">
-                                            <p className="font-bold text-slate-900 text-xs truncate">
+                                            <p className="font-bold text-slate-900 text-[14px] truncate">
                                                 {project?.title || 'Untitled'}
                                             </p>
                                             {isOwner && (
@@ -150,20 +150,20 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
                                                 </button>
                                             )}
                                         </div>
-                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{project?.type || 'Standard'}</p>
+                                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{project?.type || 'Standard'}</p>
                                     </td>
                                     <td className="px-6 py-2.5">
-                                        <p className="text-[11px] font-bold text-slate-700">{project?.process || 'Operations'}</p>
-                                        <p className="text-[9px] text-slate-400 font-medium mt-0.5">{project?.methodology || 'Lean'}</p>
+                                        <p className="text-[13px] font-bold text-slate-700">{project?.process || 'Operations'}</p>
+                                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">{project?.methodology || 'Lean'}</p>
                                     </td>
                                     <td className="px-6 py-2.5">
                                         <StatusBadge status={project?.status} />
                                     </td>
                                     <td className="px-6 py-2.5">
-                                        <p className="text-xs font-black text-slate-900">{formatCurrency(project?.estimatedBenefit)}</p>
+                                        <p className="text-[14px] font-black text-slate-900">{formatCurrency(project?.estimatedBenefit)}</p>
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            <Calendar size={8} className="text-slate-300" />
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase">{project?.targetDate || 'Q4 2024'}</p>
+                                            <Calendar size={10} className="text-slate-400" />
+                                            <p className="text-[11px] text-slate-500 font-bold uppercase">{project?.targetDate || 'Q4 2024'}</p>
                                         </div>
                                     </td>
                                     <td className="px-6 py-2.5 text-right">
@@ -198,9 +198,9 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
 
 function SortBtn({ label, k, sortKey, theme, toggleSort }) {
     return (
-        <button onClick={() => toggleSort(k)} className="flex items-center gap-1.5 group text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
+        <button onClick={() => toggleSort(k)} className="flex items-center gap-1.5 group text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors">
             {label}
-            <ArrowUpDown size={10} className={`${sortKey === k ? 'opacity-100' : 'opacity-20 group-hover:opacity-50'} transition-opacity`} style={sortKey === k ? { color: '#F05A28' } : {}} />
+            <ArrowUpDown size={12} className={`${sortKey === k ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'} transition-opacity`} style={sortKey === k ? { color: '#F05A28' } : {}} />
         </button>
     );
 }

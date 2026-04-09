@@ -40,7 +40,7 @@ export function LoginPage({ onLogin, error }) {
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden font-sans select-none">
             {/* Ambient Background */}
             <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#F05A28]/5 blur-[120px]" />
-            <div className="absolute bottom-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-slate-200/50 blur-[120px]" />
+            <div className="absolute bottom-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-slate-100/40 blur-[120px]" />
             
             <div className="max-w-md w-full relative z-10 space-y-8 animate-fade-in text-center">
                 {/* Branding Block */}
@@ -99,7 +99,7 @@ export function LoginPage({ onLogin, error }) {
                                             <GoogleLogin
                                                 onSuccess={handleSuccess}
                                                 onError={handleError}
-                                                useFedCM={true}
+                                                useFedCM={false}
                                                 theme="filled_blue"
                                                 shape="circle"
                                                 size="large"

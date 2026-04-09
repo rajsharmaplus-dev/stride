@@ -83,7 +83,11 @@ export default function App() {
   const displayProjects = projects.filter(p => {
     if (!user) return false;
     if (view === 'review') return p.status === PROJECT_STATUS.PENDING && p.managerId === user?.id;
-    if (view === 'closure') return p.status === PROJECT_STATUS.ACTIVE && p.submitterId === user?.id;
+    if (view === 'closure') {
+        if (user?.role === 'Admin') return p.status === PROJECT_STATUS.ACTIVE;
+        if (user?.role === 'Manager') return p.status === PROJECT_STATUS.ACTIVE && p.managerId === user?.id;
+        return p.status === PROJECT_STATUS.ACTIVE && p.submitterId === user?.id;
+    }
     return p.submitterId === user?.id || p.managerId === user?.id || user?.role === 'Admin';
   });
 
@@ -549,8 +553,8 @@ export default function App() {
           onClick={() => navigate('/submit')}
           className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-[60] group flex items-center gap-3 bg-slate-900 text-white pl-5 pr-6 py-4 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 animate-slide-up"
           style={{ 
-            background: `linear-gradient(135deg, ${theme?.accent || '#6366f1'}, ${theme?.accent || '#6366f1'}dd)`,
-            boxShadow: `0 12px 32px ${theme?.accentShadow || 'rgba(0,0,0,0.2)'}`
+            background: `linear-gradient(135deg, ${theme?.accent || '#F05A28'}, ${theme?.accent || '#F05A28'}dd)`,
+            boxShadow: `0 12px 32px ${theme?.accentShadow || 'rgba(240, 90, 40, 0.2)'}`
           }}
         >
           <div className="bg-white/20 p-1.5 rounded-xl group-hover:rotate-90 transition-transform duration-500">

@@ -8,7 +8,7 @@ const STATUS_STYLES = {
     [PROJECT_STATUS.REWORK]: 'bg-orange-50 text-orange-600 border-orange-100',
     [PROJECT_STATUS.ACTIVE]: 'bg-emerald-50 text-emerald-600 border-emerald-100',
     [PROJECT_STATUS.DECLINED]: 'bg-red-50 text-red-600 border-red-100',
-    [PROJECT_STATUS.CLOSED]: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    [PROJECT_STATUS.CLOSED]: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
 const STATUS_DOT = {
@@ -17,13 +17,13 @@ const STATUS_DOT = {
     [PROJECT_STATUS.REWORK]: 'bg-orange-400',
     [PROJECT_STATUS.ACTIVE]: 'bg-emerald-400',
     [PROJECT_STATUS.DECLINED]: 'bg-red-400',
-    [PROJECT_STATUS.CLOSED]: 'bg-indigo-400',
+    [PROJECT_STATUS.CLOSED]: 'bg-slate-400',
 };
 
 export function StatusBadge({ status }) {
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors ${STATUS_STYLES[status] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>
-            <span className={`w-1 h-1 rounded-full ${STATUS_DOT[status] || 'bg-slate-300'}`} />
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-widest border transition-colors ${STATUS_STYLES[status] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[status] || 'bg-slate-300'}`} />
             {status || 'Unknown'}
         </span>
     );
@@ -31,39 +31,64 @@ export function StatusBadge({ status }) {
 
 export function StatCard({ title, value, icon, highlight, theme, color = 'default', trend, onClick }) {
     const isAccent = color === 'accent';
+    
+    const colorStyles = {
+        default: 'text-slate-500 bg-slate-50 group-hover:bg-slate-100',
+        emerald: 'text-emerald-600 bg-emerald-50 group-hover:bg-emerald-100/80',
+        amber: 'text-amber-600 bg-amber-50 group-hover:bg-amber-100/80',
+        accent: 'text-white bg-white/20'
+    };
+
+    const trendStyles = {
+        up: 'text-emerald-600',
+        down: 'text-red-500',
+        neutral: 'text-slate-400'
+    };
 
     return (
         <div 
             onClick={onClick}
-            className={`relative group overflow-hidden rounded-2xl border transition-all duration-300 ${
+            className={`relative group overflow-hidden rounded-3xl border transition-all duration-300 ${
                 isAccent 
-                ? 'border-transparent shadow-lg hover:shadow-xl' 
-                : 'border-slate-100 bg-white hover:border-primary-500/30'
+                ? 'border-transparent shadow-xl hover:shadow-2xl hover:-translate-y-1' 
+                : 'border-slate-100 bg-white hover:border-primary-500/30 hover:shadow-lg hover:-translate-y-1'
             } ${onClick ? 'cursor-pointer' : ''}`}
             style={isAccent ? { background: 'linear-gradient(135deg, #F05A28 0%, #d94e1f 100%)' } : {}}
         >
-            <div className="p-4 relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${isAccent ? 'text-white/60' : 'text-slate-400'}`}>
-                        {title}
-                    </p>
-                    <div className={`p-1.5 rounded-lg ${isAccent ? 'bg-white/20 text-white' : 'bg-slate-50 text-slate-400 group-hover:text-primary-500'}`}>
-                        {React.cloneElement(icon, { size: 14 })}
+            <div className="p-5 relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                    <div className={`p-2 rounded-2xl transition-colors duration-300 ${colorStyles[color] || colorStyles.default}`}>
+                        {React.cloneElement(icon, { size: 18, strokeWidth: 2.5 })}
                     </div>
-                </div>
-                <div className="flex items-end gap-2">
-                    <p className={`text-2xl font-black font-display tracking-tight leading-none ${isAccent ? 'text-white' : 'text-slate-900'}`}>
-                        {value}
-                    </p>
                     {trend && (
-                        <span className={`text-[9px] font-bold mb-0.5 ${isAccent ? 'text-white/40' : 'text-slate-300'}`}>
-                            {trend}
-                        </span>
+                        <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${isAccent ? 'bg-white/10 text-white/60' : 'bg-slate-50 text-slate-400'}`}>
+                           <span className={trend.startsWith('+') ? 'text-emerald-500' : trend.startsWith('-') ? 'text-red-400' : ''}>
+                                {trend.startsWith('+') ? '↑' : trend.startsWith('-') ? '↓' : ''}
+                           </span>
+                           {trend.replace(/[+-]/, '')}
+                        </div>
                     )}
                 </div>
+                
+                <div className="space-y-1">
+                    <p className={`text-[11px] font-black uppercase tracking-[0.15em] ${isAccent ? 'text-white/70' : 'text-slate-400'}`}>
+                        {title}
+                    </p>
+                    <p className={`text-3xl font-black font-display tracking-tighter leading-none ${isAccent ? 'text-white' : 'text-slate-900'}`}>
+                        {value}
+                    </p>
+                </div>
             </div>
-            {/* Background accent line */}
-            <div className={`absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isAccent ? 'bg-white/30' : 'bg-primary-500'}`} />
+
+            {/* Subtle decorative pattern for accent card */}
+            {isAccent && (
+                <div className="absolute right-[-20%] bottom-[-20%] opacity-10 select-none pointer-events-none rotate-12">
+                    {React.cloneElement(icon, { size: 120, strokeWidth: 1 })}
+                </div>
+            )}
+            
+            {/* Background accent line or glow */}
+            <div className={`absolute bottom-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isAccent ? 'bg-white/20' : 'bg-primary-500'}`} />
         </div>
     );
 }
@@ -79,10 +104,10 @@ export function NavItem({ icon, label, active, onClick, count, theme }) {
                  style={active ? { background: theme.navActive } : {}} />
             
             <div className="flex items-center gap-3 relative z-10">
-                <span className={`transition-colors duration-200 ${active ? 'text-white' : 'text-white/30 group-hover:text-white'}`}>
-                    {React.cloneElement(icon, { size: 16 })}
+                <span className={`transition-colors duration-200 ${active ? 'text-white' : 'text-white/40 group-hover:text-white'}`}>
+                    {React.cloneElement(icon, { size: 18 })}
                 </span>
-                <span className={`text-xs tracking-tight transition-colors duration-200 ${active ? 'text-white font-bold' : 'text-white/60 font-medium group-hover:text-white'}`}>
+                <span className={`text-[15px] tracking-tight transition-colors duration-200 ${active ? 'text-white font-bold' : 'text-white/70 font-medium group-hover:text-white'}`}>
                     {label}
                 </span>
             </div>
@@ -100,12 +125,14 @@ export function NavItem({ icon, label, active, onClick, count, theme }) {
 
 export function DetailItem({ label, value, icon: Icon }) {
     return (
-        <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/50 border border-slate-100/50">
+        <div className="space-y-2 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-primary-500/20 transition-all group">
             <div className="flex items-center gap-2">
-                {Icon && <Icon size={12} className="text-slate-300" />}
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
+                <div className="p-1.5 rounded-lg bg-slate-50 text-slate-400 group-hover:text-primary-500 group-hover:bg-primary-500/5 transition-colors">
+                    {Icon && <Icon size={14} strokeWidth={2.5} />}
+                </div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">{label}</span>
             </div>
-            <p className="text-sm font-bold text-slate-800 leading-tight">{value || '—'}</p>
+            <p className="text-[14px] font-black text-slate-800 leading-none">{value || '—'}</p>
         </div>
     );
 }
@@ -134,8 +161,8 @@ export function BulkActionBar({
       <div className="bg-slate-900 shadow-2xl border border-white/10 p-2 rounded-2xl flex items-center justify-between backdrop-blur-md">
         <div className="flex items-center gap-4 px-4">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#F05A28]">Bulk Selection</span>
-            <span className="text-white text-xs font-bold">{count} Initiatives selected</span>
+            <span className="text-[12px] font-black uppercase tracking-widest text-[#F05A28]">Bulk Selection</span>
+            <span className="text-white text-sm font-bold">{count} Initiatives selected</span>
           </div>
         </div>
 
@@ -145,7 +172,7 @@ export function BulkActionBar({
           )}
           {showApproval && (
             <div className="flex gap-1.5 mr-2 pr-2 border-r border-white/10">
-              <button onClick={onApprove} disabled={isLoading} className="btn-primary !bg-emerald-600">Approve</button>
+              <button onClick={onApprove} disabled={isLoading} className="btn-primary !bg-[#F05A28]">Approve</button>
               <button onClick={onDecline} disabled={isLoading} className="btn-primary !bg-red-600">Decline</button>
             </div>
           )}
@@ -153,7 +180,7 @@ export function BulkActionBar({
              <button onClick={onReassign} disabled={isLoading} className="btn-secondary !bg-transparent !text-white !border-white/20">Reassign</button>
           )}
           {showClosing && (
-             <button onClick={onClose} disabled={isLoading} className="btn-primary !bg-indigo-600">Close Out</button>
+             <button onClick={onClose} disabled={isLoading} className="btn-primary !bg-slate-900">Close Out</button>
           )}
           <button onClick={onExport} disabled={isLoading} className="p-2 text-white/60 hover:text-white transition-colors">
             <Download size={18} />
