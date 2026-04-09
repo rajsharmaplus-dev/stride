@@ -38,14 +38,14 @@ export function LoginPage({ onLogin, error }) {
             <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#F05A28]/5 blur-[120px]" />
             <div className="absolute bottom-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-slate-200/50 blur-[120px]" />
             
-            <div className="max-w-md w-full relative z-10 space-y-12 animate-fade-in text-center">
+            <div className="max-w-md w-full relative z-10 space-y-8 animate-fade-in text-center">
                 {/* Branding Block */}
-                <div className="space-y-6">
-                    <div className="flex justify-center mb-4">
+                <div className="space-y-4">
+                    <div className="flex justify-center mb-2">
                         <img 
                             src="/logo.png" 
                             alt="GlobalLogic Logo" 
-                            className="h-24 w-auto object-contain"
+                            className="h-32 w-auto max-w-[80%] object-contain"
                         />
                     </div>
                     <div>
@@ -57,7 +57,7 @@ export function LoginPage({ onLogin, error }) {
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white p-12 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.12)] rounded-[48px] space-y-8 border border-white relative overflow-hidden">
+                <div className="bg-white p-8 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.12)] rounded-[40px] space-y-6 border border-white relative overflow-hidden">
                     <div className="relative z-10 space-y-3">
                         <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">Authentication</h2>
                         <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-relaxed">
