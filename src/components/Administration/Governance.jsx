@@ -1,3 +1,6 @@
+import React from 'react';
+import { Search, FileCheck, History, Users, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+
 export function Governance({ projects, onSelectProject }) {
     const auditEvents = (projects || []).flatMap(p => {
         const history = Array.isArray(p.history) ? p.history : [];
