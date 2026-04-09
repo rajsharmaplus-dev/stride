@@ -9,8 +9,12 @@ export function LoginPage({ onLogin, error }) {
 
     useEffect(() => {
         fetch('/api/auth/config')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
             .then(data => {
+                console.log('Auth Config Received:', data);
                 if (data.clientId && data.clientId !== 'your_google_client_id_here') {
                     setDynamicClientId(data.clientId);
                 } else {
@@ -89,19 +93,53 @@ export function LoginPage({ onLogin, error }) {
                                     <span className="text-[10px] font-black uppercase text-emerald-500 tracking-widest">Identifying Session...</span>
                                 </div>
                             ) : (
-                                <GoogleOAuthProvider clientId={dynamicClientId}>
-                                    <div className="transition-transform active:scale-95 duration-200">
-                                        <GoogleLogin
-                                            onSuccess={handleSuccess}
-                                            onError={handleError}
-                                            useFedCM={true}
-                                            theme="filled_blue"
-                                            shape="circle"
-                                            size="large"
-                                            text="continue_with"
-                                        />
+                                <div className="space-y-6 w-full">
+                                    <GoogleOAuthProvider clientId={dynamicClientId}>
+                                        <div className="transition-transform active:scale-95 duration-200 flex justify-center">
+                                            <GoogleLogin
+                                                onSuccess={handleSuccess}
+                                                onError={handleError}
+                                                useFedCM={true}
+                                                theme="filled_blue"
+                                                shape="circle"
+                                                size="large"
+                                                text="continue_with"
+                                            />
+                                        </div>
+                                    </GoogleOAuthProvider>
+
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-300 mb-4">Verification Access</p>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {[
+                                                { id: 'u3', label: 'Admin Access', role: 'Corporate' },
+                                                { id: 'u2', label: 'Manager Access', role: 'Operations' },
+                                                { id: 'u1', label: 'Employee Access', role: 'Portfolio' }
+                                            ].map(mock => (
+                                                <button
+                                                    key={mock.id}
+                                                    onClick={() => {
+                                                        setIsLoading(true);
+                                                        fetch('/api/auth/dev-login', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ userId: mock.id })
+                                                        })
+                                                        .then(res => res.json())
+                                                        .then(data => {
+                                                            if (data.success) onLogin(null, data.user);
+                                                        })
+                                                        .catch(() => setIsLoading(false));
+                                                    }}
+                                                    className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group"
+                                                >
+                                                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{mock.label}</span>
+                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-[#F05A28] transition-colors">{mock.role}</span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </GoogleOAuthProvider>
+                                </div>
                             )}
                         </div>
                     )}

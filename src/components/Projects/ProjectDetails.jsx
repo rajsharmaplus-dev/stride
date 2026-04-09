@@ -1,6 +1,11 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { ChevronLeft, Edit2, Play, AlertTriangle, ShieldX, CheckSquare, MessageSquare, Plus, Loader2, ArrowRight } from 'lucide-react';
-import { StatusBadge } from '../Common';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { 
+    ChevronLeft, Edit2, Play, AlertTriangle, ShieldX, CheckSquare, MessageSquare, Plus, Loader2, ArrowRight,
+    ArrowLeft, Lock, Printer, Layers, Activity, Target, Clock, DollarSign, Send, AlertCircle, RefreshCw, History
+} from 'lucide-react';
+import { StatusBadge, DetailItem } from '../Common';
+import { ROLE_THEME, PROJECT_STATUS } from '../../constants/projectConstants';
+import { formatCurrency } from '../../utils/format';
 
 export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateStatus, onCloseProject, onEditAndResubmit, fetchComments, addComment }) {
     const [comment, setComment] = useState('');

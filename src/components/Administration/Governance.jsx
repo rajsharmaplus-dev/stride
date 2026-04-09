@@ -36,10 +36,10 @@ export function Governance({ projects, onSelectProject }) {
                         <input
                             type="text"
                             placeholder="Find record..."
-                            className="pl-9 pr-4 py-2.5 bg-white border border-slate-100 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#F05A28]/20 transition-all w-48 font-bold placeholder:font-medium shadow-sm transition-all"
+                            className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#F05A28]/20 focus:bg-white transition-all w-48 font-bold placeholder:font-medium shadow-sm"
                         />
                     </div>
-                    <button className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg shadow-slate-900/10">
+                    <button className="bg-[#F05A28] text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#D94E1F] transition-all active:scale-95 shadow-lg shadow-[#F05A28]/20">
                         Export Report
                     </button>
                 </div>

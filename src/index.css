@@ -51,19 +51,25 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 2px;
+        height: 3px;
         background: var(--gl-orange);
         z-index: 1000;
+        box-shadow: 0 1px 10px rgba(240, 90, 40, 0.2);
+    }
+
+    h1, h2, h3, .font-display {
+        font-family: var(--font-display);
+        letter-spacing: -0.04em;
     }
 }
 
 @layer components {
     .gl-card {
-        @apply bg-white border border-slate-200/50 shadow-[0_2px_12px_rgba(0,0,0,0.03)] rounded-xl transition-all duration-300;
+        @apply bg-white border border-slate-200/50 shadow-[0_2px_12px_rgba(0,0,0,0.02)] rounded-2xl transition-all duration-300;
     }
 
     .gl-card-hover {
-        @apply hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:border-primary-500/20;
+        @apply hover:shadow-[0_12px_32px_rgba(0,0,0,0.04)] hover:border-primary-500/10 hover:-translate-y-0.5;
     }
 
     .btn-primary {

@@ -47,7 +47,7 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
     const isClosureView = viewContext === 'closure';
 
     return (
-        <div className="space-y-8 animate-fade-in pr-2 relative overflow-hidden font-sans">
+        <div className="space-y-8 animate-fade-in pr-2 relative overflow-hidden font-sans pt-2 border-t border-slate-100/50">
             {/* Context Watermark */}
             {WatermarkIcon && (
                 <div className="absolute top-[-20px] right-[-20px] opacity-[0.03] select-none pointer-events-none">

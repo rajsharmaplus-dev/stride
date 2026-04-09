@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -20,6 +21,12 @@ const app = express();
 app.use((req, res, next) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
     next();
+});
+
+app.get('/api/auth/config', (req, res) => {
+    res.json({ 
+        clientId: process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID 
+    });
 });
 
 // --- 2. Production Security Middleware ---
@@ -163,6 +170,27 @@ app.post('/api/auth/google-login', async (req, res) => {
     } catch (error) {
         console.error('Login Error:', error);
         res.status(500).json({ error: 'Login failed' });
+    }
+});
+
+app.post('/api/auth/dev-login', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const userResult = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
+        const user = userResult.rows[0];
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const sessionData = { id: user.id, name: user.name, role: user.role };
+        res.cookie('stride_session', JSON.stringify(sessionData), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            signed: true
+        });
+        res.json({ success: true, user: sessionData });
+    } catch (error) {
+        res.status(500).json({ error: 'Dev login failed' });
     }
 });
 
