@@ -15,7 +15,7 @@ export const METHODOLOGIES = ['Six Sigma', 'Lean', 'Agile', 'Waterfall', 'Quick 
 // Role-based theming: each role gets a distinct professional palette aligned with GlobalLogic
 export const ROLE_THEME = {
     Employee: {
-        sidebarBg: 'linear-gradient(160deg, #1e293b 0%, #0f172a 100%)',
+        sidebarBg: 'linear-gradient(160deg, #53565A 0%, #313336 100%)',
         accent: '#F05A28',
         accentHover: '#d94e1f',
         accentLight: '#fef2f2',
@@ -33,7 +33,7 @@ export const ROLE_THEME = {
         dotColor: '#F05A28',
     },
     Manager: {
-        sidebarBg: 'linear-gradient(160deg, #1e293b 0%, #0f172a 100%)',
+        sidebarBg: 'linear-gradient(160deg, #53565A 0%, #313336 100%)',
         accent: '#F05A28',
         accentHover: '#d94e1f',
         accentLight: '#fef2f2',
@@ -51,7 +51,7 @@ export const ROLE_THEME = {
         dotColor: '#F05A28',
     },
     Admin: {
-        sidebarBg: 'linear-gradient(160deg, #1e293b 0%, #0f172a 100%)',
+        sidebarBg: 'linear-gradient(160deg, #53565A 0%, #313336 100%)',
         accent: '#F05A28',
         accentHover: '#d94e1f',
         accentLight: '#fef2f2',
