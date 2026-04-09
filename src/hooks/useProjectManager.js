@@ -119,8 +119,20 @@ export function useProjectManager() {
         }
     }, [fetchData, user]);
 
-    const login = async (credential) => {
+    const login = async (credential, existingUser = null) => {
         setAuthError(null);
+        
+        // If we already have the user (from dev-login), just set it
+        if (existingUser) {
+            setUser(existingUser);
+            return { success: true };
+        }
+
+        if (!credential) {
+            setAuthError('Missing login credentials');
+            return { success: false, error: 'Missing credentials' };
+        }
+
         try {
             const data = await fetchApi('/auth/google-login', {
                 method: 'POST',
