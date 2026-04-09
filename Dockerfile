@@ -9,6 +9,7 @@ RUN npm ci
 
 # Copy and build frontend
 COPY . .
+ENV VITE_GOOGLE_CLIENT_ID=801131875690-fb46e9k4i8qd6h6apqtvmpjfl6aae6hg.apps.googleusercontent.com
 RUN npm run build
 
 # Production stage

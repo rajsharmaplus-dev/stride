@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, Shield, User, Briefcase, ChevronRight, Search, CheckCircle2, AlertCircle } from 'lucide-react';
 import { ROLE_THEME } from '../../constants/projectConstants';
+import { StatusBadge } from '../Common';
 
 export function PeopleManagement({ currentUser, users, onUpdateRole }) {
     const [searchTerm, setSearchTerm] = useState('');

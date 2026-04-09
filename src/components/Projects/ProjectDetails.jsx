@@ -1,3 +1,7 @@
+import React, { useState, useCallback, useMemo } from 'react';
+import { ChevronLeft, Edit2, Play, AlertTriangle, ShieldX, CheckSquare, MessageSquare, Plus, Loader2, ArrowRight } from 'lucide-react';
+import { StatusBadge } from '../Common';
+
 export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateStatus, onCloseProject, onEditAndResubmit, fetchComments, addComment }) {
     const [comment, setComment] = useState('');
     const [closureData, setClosureData] = useState({ investment: '', roi: '' });
