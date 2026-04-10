@@ -41,8 +41,10 @@ const allowedOrigins = [
 app.use(cors({
     origin: (origin, callback) => {
         // Allow if no origin (like mobile apps or curl) or if it's in the whitelist
-        // Or if it's a sub-domain of .run.app (Production)
-        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.run.app')) {
+        // --- SECURITY FIX: Strict CORS Policy ---
+        const isProdCloudRun = /^https:\/\/stride-(service|app)-[a-zA-Z0-9-]+\.(?:[a-zA-Z0-9-]+\.)?run\.app$/.test(origin);
+        
+        if (!origin || allowedOrigins.includes(origin) || isProdCloudRun) {
             callback(null, true);
         } else {
             console.error('Blocked by CORS:', origin);
@@ -62,7 +64,18 @@ const apiLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 app.use(express.json());
-app.use(cookieParser(process.env.SESSION_SECRET || 'stride_default_development_secret_key_123!'));
+
+// --- SECURITY FIX: No hardcoded secrets in prod ---
+let sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error("FATAL SECURITY ERROR: SESSION_SECRET is not set in the production environment.");
+    }
+    sessionSecret = 'stride_default_development_secret_key_123!';
+    console.warn("WARNING: Using insecure default session secret. Do not do this in production!");
+}
+app.use(cookieParser(sessionSecret));
+// --------------------------------------------------
 
 const PORT = process.env.PORT || 3001;
 
@@ -174,6 +187,10 @@ app.post('/api/auth/google-login', async (req, res) => {
 });
 
 app.post('/api/auth/dev-login', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ error: 'Dev login is disabled in production' });
+    }
+
     const { userId } = req.body;
     try {
         const userResult = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
@@ -275,6 +292,16 @@ app.post('/api/projects', authorize(), async (req, res) => {
     const p = req.body;
     const { history } = p;
 
+    // --- SECURITY FIX: BOLA Prevention ---
+    // Force the submitter to be the authenticated user
+    p.submitterId = req.user.id;
+    
+    // Prevent skipping the governance workflow
+    if (p.status !== 'Draft' && p.status !== 'Pending Approval') {
+        p.status = 'Draft'; 
+    }
+    // -------------------------------------
+
     try {
         const sanitizedTitle = sanitize(p.title);
         const sanitizedSummary = sanitize(p.summary);
@@ -339,6 +366,14 @@ app.patch('/api/projects/:id', authorize(), async (req, res) => {
                 return res.status(403).json({ error: 'Permission denied: Only the project owner or an admin can modify project details or financials' });
             }
         }
+
+        // --- SECURITY FIX: State-Agnostic Tampering Prevention ---
+        if (title || summary || process || type || methodology || targetDate || docLink || estimatedBenefit !== undefined) {
+            if (!isAdmin && project.status !== 'Draft' && project.status !== 'Pending Rework') {
+                return res.status(403).json({ error: 'Permission denied: Core project details and target financials are locked after submission.' });
+            }
+        }
+        // ---------------------------------------------------------
 
         await db.transaction(async (client) => {
             const validationErrors = validateProject({ 
@@ -450,6 +485,16 @@ app.post('/api/projects/batch-update-status', authorize(['Manager', 'Admin']), a
             const date = new Date().toISOString().split('T')[0];
 
             for (const id of ids) {
+                // --- SECURITY FIX: BOLA Prevention ---
+                const projectResult = await client.query('SELECT manager_id FROM projects WHERE id = $1', [id]);
+                if (projectResult.rowCount === 0) continue;
+                
+                const p = projectResult.rows[0];
+                if (req.user.role !== 'Admin' && req.user.id !== p.manager_id) {
+                    throw new Error(`Unauthorized to update status of project ${id}`);
+                }
+                // -------------------------------------
+
                 await client.query('UPDATE projects SET status = $1 WHERE id = $2', [status, id]);
                 await client.query(
                     db.isPostgres
