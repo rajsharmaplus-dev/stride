@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Users, Shield, User, Briefcase, ChevronRight, Search, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Users, Shield, User, Briefcase, ChevronRight, Search, CheckCircle2, AlertCircle, Ban, Trash2 } from 'lucide-react';
 import { ROLE_THEME } from '../../constants/projectConstants';
 import { StatusBadge } from '../Common';
 
-export function PeopleManagement({ currentUser, users, onUpdateRole }) {
+export function PeopleManagement({ currentUser, users, onUpdateRole, onUpdateStatus, onDeleteUser }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [updatingUserId, setUpdatingUserId] = useState(null);
     const [message, setMessage] = useState(null);
@@ -13,18 +13,23 @@ export function PeopleManagement({ currentUser, users, onUpdateRole }) {
         u.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleRoleChange = async (userId, newRole) => {
+    const handleAction = async (userId, actionName, actionPromise) => {
         setUpdatingUserId(userId);
-        const result = await onUpdateRole(userId, newRole);
+        const result = await actionPromise;
         setUpdatingUserId(null);
         
         if (result.success) {
-            setMessage({ text: 'Access Updated', type: 'success' });
+            setMessage({ text: `${actionName} Successful`, type: 'success' });
             setTimeout(() => setMessage(null), 3000);
         } else {
-            setMessage({ text: result.error || 'Update Failed', type: 'error' });
+            setMessage({ text: result.error || `${actionName} Failed`, type: 'error' });
         }
     };
+
+    const handleRoleChange = (userId, newRole) => handleAction(userId, 'Role Update', onUpdateRole(userId, newRole));
+    
+    // Fallback locally until user refresh populates `status` column
+    const getStatus = (u) => u.status || 'Active';
 
     return (
         <div className="space-y-6 animate-fade-in pr-6 pb-10">
@@ -73,6 +78,7 @@ export function PeopleManagement({ currentUser, users, onUpdateRole }) {
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100 text-left">
                                 <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">User Profile</th>
+                                <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Status</th>
                                 <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400">Current Rank</th>
                                 <th className="px-6 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Access Management</th>
                             </tr>
@@ -100,6 +106,15 @@ export function PeopleManagement({ currentUser, users, onUpdateRole }) {
                                             </div>
                                         </td>
                                         <td className="px-6 py-3">
+                                            <span className={`text-[10px] font-black tracking-widest uppercase px-2 py-1 rounded-md border ${
+                                                getStatus(u) === 'Active' 
+                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                                : 'bg-red-50 text-red-600 border-red-100'
+                                            }`}>
+                                                {getStatus(u)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-3">
                                             <div className="flex items-center gap-2">
                                                 <StatusBadge status={u.role} />
                                             </div>
@@ -108,10 +123,10 @@ export function PeopleManagement({ currentUser, users, onUpdateRole }) {
                                             {isSelf ? (
                                                 <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest px-2 py-1 rounded-md border border-dashed border-slate-200">Full System Root</span>
                                             ) : (
-                                                <div className="flex items-center justify-end gap-2">
+                                                <div className="flex items-center justify-end gap-2 text-slate-400">
                                                     <select
                                                         disabled={updatingUserId === u.id}
-                                                        className="input-compact !w-auto !py-1 !px-3 !text-[10px] font-black uppercase tracking-widest cursor-pointer disabled:opacity-50"
+                                                        className="input-compact !w-auto !py-1 !px-2 !text-[10px] font-black uppercase tracking-widest cursor-pointer disabled:opacity-50"
                                                         value={u.role}
                                                         onChange={(e) => handleRoleChange(u.id, e.target.value)}
                                                     >
@@ -119,6 +134,28 @@ export function PeopleManagement({ currentUser, users, onUpdateRole }) {
                                                         <option value="Manager">Manager</option>
                                                         <option value="Admin">Admin</option>
                                                     </select>
+                                                    
+                                                    {/* Security Actions */}
+                                                    <button 
+                                                        title={getStatus(u) === 'Active' ? 'Suspend User' : 'Reactivate User'}
+                                                        disabled={updatingUserId === u.id}
+                                                        onClick={() => handleAction(u.id, 'Status Update', onUpdateStatus(u.id, getStatus(u) === 'Active' ? 'Suspended' : 'Active'))}
+                                                        className="p-1.5 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors disabled:opacity-50"
+                                                    >
+                                                        <Ban size={14} className={getStatus(u) === 'Suspended' ? 'text-red-500' : ''} />
+                                                    </button>
+                                                    <button 
+                                                        title="Permanently Remove User"
+                                                        disabled={updatingUserId === u.id}
+                                                        onClick={() => {
+                                                            if (confirm('Are you certain? This will delete the user entirely if they have no active projects.')) {
+                                                                handleAction(u.id, 'Deletion', onDeleteUser(u.id));
+                                                            }
+                                                        }}
+                                                        className="p-1.5 hover:bg-red-50 rounded-lg hover:text-red-600 transition-colors disabled:opacity-50"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
                                                 </div>
                                             )}
                                         </td>

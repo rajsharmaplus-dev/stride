@@ -91,7 +91,8 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
     const isLocked = [PROJECT_STATUS.ACTIVE, PROJECT_STATUS.CLOSED, PROJECT_STATUS.DECLINED].includes(p?.status);
 
     const history = Array.isArray(p?.history) ? p.history : [];
-    const submitterName = users.find(u => u.id === p?.submitterId)?.name || 'Unknown User';
+    const submitterName = p?.submitterName || users.find(u => u.id === p?.submitterId)?.name || 'Unknown User';
+    const managerName = p?.managerName || users.find(u => u.id === p?.managerId)?.name || 'Assigned Manager';
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-10 font-sans pr-4">
@@ -128,15 +129,30 @@ export function ProjectDetails({ project: p, user, users = [], onBack, onUpdateS
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                                 <h1 className="text-3xl font-black text-slate-900 tracking-tighter leading-tight font-display">{p?.title || 'Untitled Initiative'}</h1>
-                                <div className="flex items-center gap-4">
+                                <div className="flex flex-wrap items-center gap-y-4 gap-x-6">
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Submitted by <span className="text-slate-900">{submitterName}</span></p>
+                                        <div className="space-y-0.5">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Submission By</p>
+                                            <p className="text-[11px] font-bold text-slate-900 uppercase tracking-widest">{submitterName}</p>
+                                        </div>
                                     </div>
-                                    <div className="w-px h-2 bg-slate-200" />
-                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Established {p?.createdAt || '—'}</p>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[#F05A28]/40" />
+                                        <div className="space-y-0.5">
+                                            <p className="text-[8px] font-black text-[#F05A28]/60 uppercase tracking-widest">Reporting Manager</p>
+                                            <p className="text-[11px] font-bold text-slate-900 uppercase tracking-widest">{managerName}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                        <div className="space-y-0.5">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Identity Timeline</p>
+                                            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Est. {p?.createdAt || '—'}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </header>

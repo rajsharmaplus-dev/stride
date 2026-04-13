@@ -16,6 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // No manual pool instantiation here; handled by db.js
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Cloud Run) for express-rate-limit
 
 // --- 1. Security Headers (Must be at the top level) ---
 app.use((req, res, next) => {
@@ -157,6 +158,12 @@ app.post('/api/auth/google-login', async (req, res) => {
                 [userId, name, emailLower, role, googleId]);
             user = { id: userId, name, email: emailLower, role: role, google_id: googleId };
         } else {
+            // --- SECURITY FIX: Reject suspended users ---
+            if (user.status === 'Suspended') {
+                return res.status(403).json({ error: 'Your account has been suspended. Please contact your administrator.' });
+            }
+            // --------------------------------------------
+
             // FORCE PROMOTE owner if they were already in the DB as an Employee
             if (emailLower === 'rajsharmaplus@gmail.com' && user.role !== 'Admin') {
                 await db.query('UPDATE users SET role = $1 WHERE id = $2', ['Admin', user.id]);
@@ -217,11 +224,37 @@ app.get('/api/auth/config', (req, res) => {
     });
 });
 
-app.get('/api/auth/me', (req, res) => {
+app.get('/api/auth/me', async (req, res) => {
     const sessionStr = req.signedCookies.stride_session;
     const session = sessionStr ? JSON.parse(sessionStr) : null;
     if (!session) return res.json({ user: null });
-    res.json({ user: session });
+    
+    try {
+        const userResult = await db.query('SELECT role, status FROM users WHERE id = $1', [session.id]);
+        const user = userResult.rows[0];
+        
+        // --- SECURITY: Force un-authenticate if user no longer exists or is suspended
+        if (!user || user.status === 'Suspended') {
+            res.clearCookie('stride_session');
+            return res.json({ user: null });
+        }
+        
+        // --- REAL-TIME SYNC: Update the encrypted cookie if an admin changed their role mid-session
+        if (user.role !== session.role) {
+            session.role = user.role;
+            res.cookie('stride_session', JSON.stringify(session), {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                signed: true
+            });
+        }
+        res.json({ user: session });
+    } catch (e) {
+        // Fallback to cookie data if DB briefly unavailable
+        res.json({ user: session });
+    }
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -239,13 +272,18 @@ app.get('/api/projects', authorize(), async (req, res) => {
         const userId = req.user.id;
 
         let totalQuery = 'SELECT COUNT(*) as count FROM projects';
-        let projectsQuery = 'SELECT * FROM projects';
+        let projectsQuery = `
+            SELECT p.*, u1.name as submitter_name, u2.name as manager_name 
+            FROM projects p 
+            LEFT JOIN users u1 ON p.submitter_id = u1.id 
+            LEFT JOIN users u2 ON p.manager_id = u2.id
+        `;
         let logQuery = 'SELECT * FROM audit_log';
         let queryParams = [];
 
         if (!isAdmin) {
             totalQuery += ' WHERE submitter_id = $1 OR manager_id = $1';
-            projectsQuery += ' WHERE submitter_id = $1 OR manager_id = $2';
+            projectsQuery += ' WHERE p.submitter_id = $1 OR p.manager_id = $2';
             // We only need logs for projects the user can see
             logQuery = `
                 SELECT al.* FROM audit_log al
@@ -272,7 +310,9 @@ app.get('/api/projects', authorize(), async (req, res) => {
             actualInvestment: p.actual_investment ? Number(p.actual_investment) : null,
             actualRoi: p.actual_roi ? Number(p.actual_roi) : null,
             submitterId: p.submitter_id,
+            submitterName: p.submitter_name,
             managerId: p.manager_id,
+            managerName: p.manager_name,
             targetDate: p.target_date,
             createdAt: p.created_at,
             docLink: p.doc_link,
@@ -585,6 +625,60 @@ app.patch('/api/users/:id/role', authorize(['Admin']), async (req, res) => {
         res.json({ success: true, message: `User role updated to ${role}` });
     } catch (error) {
         console.error('Error updating user role:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+app.patch('/api/users/:id/status', authorize(['Admin']), async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['Active', 'Suspended'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    // Prevent an admin from suspending themselves
+    if (id === req.user.id) {
+        return res.status(400).json({ error: 'Cannot suspend your own account' });
+    }
+
+    try {
+        await db.query('UPDATE users SET status = $1 WHERE id = $2', [status, id]);
+        res.json({ success: true, message: `User status updated to ${status}` });
+    } catch (error) {
+        console.error('Error updating user status:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+app.delete('/api/users/:id', authorize(['Admin']), async (req, res) => {
+    const { id } = req.params;
+    
+    if (id === req.user.id) {
+        return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+
+    try {
+        const projectsCheck = await db.query(
+            'SELECT COUNT(*) as count FROM projects WHERE submitter_id = $1 OR manager_id = $1',
+            [id]
+        );
+        const projectCount = parseInt(projectsCheck.rows[0].count);
+        
+        if (projectCount > 0) {
+            return res.status(400).json({ 
+                error: `User has ${projectCount} attached projects. Please delete those projects first or Suspend the user instead.` 
+            });
+        }
+        
+        await db.transaction(async (client) => {
+            await client.query('DELETE FROM comments WHERE user_id = $1', [id]);
+            await client.query('DELETE FROM users WHERE id = $1', [id]);
+        });
+        
+        res.json({ success: true, message: 'User permanently removed' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
         res.status(500).json({ error: 'Database error' });
     }
 });

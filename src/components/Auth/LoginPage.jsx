@@ -108,37 +108,7 @@ export function LoginPage({ onLogin, error }) {
                                         </div>
                                     </GoogleOAuthProvider>
 
-                                    <div className="pt-4 border-t border-slate-100">
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-300 mb-4">Verification Access</p>
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {[
-                                                { id: 'u3', label: 'Admin Access', role: 'Corporate' },
-                                                { id: 'u2', label: 'Manager Access', role: 'Operations' },
-                                                { id: 'u1', label: 'Employee Access', role: 'Portfolio' }
-                                            ].map(mock => (
-                                                <button
-                                                    key={mock.id}
-                                                    onClick={() => {
-                                                        setIsLoading(true);
-                                                        fetch('/api/auth/dev-login', {
-                                                            method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({ userId: mock.id })
-                                                        })
-                                                        .then(res => res.json())
-                                                        .then(data => {
-                                                            if (data.success) onLogin(null, data.user);
-                                                        })
-                                                        .catch(() => setIsLoading(false));
-                                                    }}
-                                                    className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group"
-                                                >
-                                                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{mock.label}</span>
-                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-[#F05A28] transition-colors">{mock.role}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+
                                 </div>
                             )}
                         </div>

@@ -14,7 +14,10 @@ let pool = null;
 let sqlite = null;
 
 if (isPostgres) {
-    pool = new Pool();
+    pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : undefined
+    });
 } else {
     const dbPath = path.join(__dirname, '../stride.db');
     sqlite = new Database(dbPath);

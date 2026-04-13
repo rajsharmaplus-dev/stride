@@ -45,6 +45,8 @@ export default function App() {
     fetchComments,
     addComment,
     updateUserRole,
+    updateUserStatus,
+    deleteUser,
     loadMore,
     triggerRefresh,
     loading
@@ -506,6 +508,8 @@ export default function App() {
                   currentUser={user}
                   users={users}
                   onUpdateRole={updateUserRole}
+                  onUpdateStatus={updateUserStatus}
+                  onDeleteUser={deleteUser}
                 />
               ) : <Navigate to="/dashboard" replace />
             } />

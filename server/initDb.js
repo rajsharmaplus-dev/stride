@@ -14,7 +14,8 @@ async function initDb() {
                     email TEXT NOT NULL UNIQUE,
                     role TEXT NOT NULL,
                     manager_id TEXT REFERENCES users(id),
-                    google_id TEXT UNIQUE
+                    google_id TEXT UNIQUE,
+                    status TEXT DEFAULT 'Active'
                 );
             `);
 

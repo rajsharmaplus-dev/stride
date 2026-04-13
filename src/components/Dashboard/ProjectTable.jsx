@@ -109,6 +109,9 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
                                 <SortBtn label="Status" k="status" sortKey={sortKey} sortDir={sortDir} theme={theme} toggleSort={toggleSort} />
                             </th>
                             <th className="px-6 py-3">
+                                <SortBtn label="Reporting Manager" k="managerName" sortKey={sortKey} theme={theme} toggleSort={toggleSort} />
+                            </th>
+                            <th className="px-6 py-3">
                                 <SortBtn label="Estimated ROI" k="estimatedBenefit" sortKey={sortKey} theme={theme} toggleSort={toggleSort} />
                             </th>
                             <th className="px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-500 text-right">
@@ -158,6 +161,16 @@ export function ProjectTable({ projects, totalCount, onLoadMore, onSelectProject
                                     </td>
                                     <td className="px-6 py-2.5">
                                         <StatusBadge status={project?.status} />
+                                    </td>
+                                    <td className="px-6 py-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-lg bg-slate-900 flex items-center justify-center text-[7px] font-black text-white shrink-0">
+                                                {project?.managerName?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'AM'}
+                                            </div>
+                                            <p className="text-[12px] font-bold text-slate-700 truncate max-w-[120px]">
+                                                {project?.managerName || 'Assigned Manager'}
+                                            </p>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-2.5">
                                         <p className="text-[14px] font-black text-slate-900">{formatCurrency(project?.estimatedBenefit)}</p>

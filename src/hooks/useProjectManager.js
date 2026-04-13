@@ -95,21 +95,23 @@ export function useProjectManager() {
         if (!user) return; // Only fetch data if authenticated
         
         try {
-            // Parallel fetch for speed
-            const usersEndpoint = user.role === 'Admin' ? '/users' : '/users/reviewers';
-            
-            const [uData, pData] = await Promise.all([
-                fetchApi(usersEndpoint),
+            // Use allSettled so one failure (e.g. projects empty/error) doesn't kill the users load
+            const [uRes, pRes] = await Promise.allSettled([
+                fetchApi(user.role === 'Admin' ? '/users' : '/users/reviewers'),
                 fetchApi(`/projects?limit=${currentLimit}`)
             ]);
             
-            setUsers(uData || []);
-            setProjects(pData?.items || []);
-            setTotalCount(pData?.total || 0);
-        } catch (error) {
-            if (error.isUnauthorized) {
-                setUser(null);
+            if (uRes.status === 'fulfilled') {
+                setUsers(uRes.value || []);
             }
+            
+            if (pRes.status === 'fulfilled' && pRes.value) {
+                setProjects(pRes.value.items || []);
+                setTotalCount(pRes.value.total || 0);
+            }
+        } catch (error) {
+            console.error('Fetch recovery required:', error);
+            if (error.isUnauthorized) setUser(null);
         }
     }, [user, limit]);
 
@@ -365,6 +367,31 @@ export function useProjectManager() {
         }
     };
 
+    const updateUserStatus = async (userId, newStatus) => {
+        try {
+            await fetchApi(`/users/${userId}/status`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: newStatus })
+            });
+            await fetchData();
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    };
+
+    const deleteUser = async (userId) => {
+        try {
+            await fetchApi(`/users/${userId}`, {
+                method: 'DELETE'
+            });
+            await fetchData();
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    };
+
     return {
         user,
         users,
@@ -385,6 +412,8 @@ export function useProjectManager() {
         fetchComments,
         addComment,
         updateUserRole,
+        updateUserStatus,
+        deleteUser,
         loadMore,
         triggerRefresh
     };
