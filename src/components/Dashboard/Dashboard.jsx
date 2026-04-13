@@ -41,6 +41,12 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
         if (viewContext === 'review' && projects?.length > 0 && !previewProject) {
             setPreviewProject(projects[0]);
         }
+        // BUG-03: Reset stale previewProject if it's been removed from the list
+        // (e.g., after a status change it leaves the review queue)
+        if (viewContext === 'review' && previewProject) {
+            const stillInList = projects?.some(p => p.id === previewProject.id);
+            if (!stillInList) setPreviewProject(projects?.[0] || null);
+        }
     }, [viewContext, projects, previewProject]);
 
     const isSplitView = viewContext === 'review';
@@ -91,7 +97,6 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
                         <StatCard
                             title="Total Initiatives"
                             value={stats?.total || 0}
-                            trend="+4% vs last mo"
                             icon={<LayoutDashboard size={20} />}
                             theme={theme}
                             color="default"
@@ -100,7 +105,6 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
                         <StatCard
                             title="Active Projects"
                             value={stats?.active || 0}
-                            trend="+12%"
                             icon={<TrendingUp size={20} />}
                             theme={theme}
                             color="emerald"
@@ -119,7 +123,6 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
                         <StatCard
                             title="Realized ROI"
                             value={formatCurrency(stats?.roi)}
-                            trend="+24% YoY"
                             icon={<DollarSign size={20} />}
                             theme={theme}
                             color="accent"
@@ -189,7 +192,7 @@ export function Dashboard({ user, stats, projects, totalCount, onLoadMore, onSel
                                 <div className="space-y-3">
                                     <p className="text-[13px] font-black text-slate-500 uppercase tracking-widest">Executive Summary</p>
                                     <p className="text-slate-600 leading-relaxed text-sm bg-slate-50/50 p-4 rounded-xl border border-slate-100 italic">
-                                        "{previewProject.description || 'No description provided.'}"
+                                        "{previewProject.summary || 'No summary provided.'}"
                                     </p>
                                 </div>
                                 <div className="pt-4 flex gap-3">

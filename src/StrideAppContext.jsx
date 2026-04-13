@@ -25,9 +25,10 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [toast, setToast] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null); // { message, onConfirm }
   const transitionTimer = useRef(null);
 
-    const {
+  const {
     user,
     users,
     projects,
@@ -42,6 +43,7 @@ export default function App() {
     closeProject,
     deleteProjects,
     batchUpdateStatus,
+    batchUpdateProjects,
     fetchComments,
     addComment,
     updateUserRole,
@@ -189,16 +191,21 @@ export default function App() {
 
     if (eligibleIds.length === 0) return;
 
-    if (confirm(`Are you sure you want to delete ${eligibleIds.length} projects?`)) {
-      const result = await deleteProjects(eligibleIds);
-      if (result.success) {
-        setToast({ message: `Deleted ${eligibleIds.length} projects`, type: 'success' });
-        setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
-      } else {
-        setToast({ message: result.error || 'Bulk deletion failed', type: 'error' });
-        triggerRefresh();
+    // UX-04: Use in-app confirmation modal instead of window.confirm
+    setConfirmModal({
+      message: `Permanently delete ${eligibleIds.length} project${eligibleIds.length !== 1 ? 's' : ''}? This cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        const result = await deleteProjects(eligibleIds);
+        if (result.success) {
+          setToast({ message: `Deleted ${eligibleIds.length} projects`, type: 'success' });
+          setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
+        } else {
+          setToast({ message: result.error || 'Bulk deletion failed', type: 'error' });
+          triggerRefresh();
+        }
       }
-    }
+    });
   };
 
   const handleBulkApprove = async () => {
@@ -247,27 +254,10 @@ export default function App() {
     }
   };
 
-  const handleBulkClose = async () => {
-    if (isSubmitting) return;
-    const eligibleIds = selectedProjects
-      .filter(p => p.submitterId === user?.id && p.status === PROJECT_STATUS.ACTIVE)
-      .map(p => p.id);
-
-    if (eligibleIds.length > 0) {
-      setIsSubmitting(true);
-      try {
-        const result = await batchUpdateStatus(eligibleIds, PROJECT_STATUS.CLOSED, 'Bulk closure from dashboard');
-        if (result.success) {
-          setToast({ message: `Closed ${eligibleIds.length} projects`, type: 'success' });
-          setSelectedIds(prev => prev.filter(id => !eligibleIds.includes(id)));
-        } else {
-          setToast({ message: result.error || 'Bulk closure failed', type: 'error' });
-          triggerRefresh();
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
+  // BUG-02: Bulk close disabled — closure requires per-project financials.
+  // Users must open each Active project individually to enter investment/ROI data.
+  const handleBulkClose = () => {
+    setToast({ message: 'To close a project, open it individually to enter final financials.', type: 'info' });
   };
 
   const handleBulkSubmit = async () => {
@@ -303,10 +293,11 @@ export default function App() {
       
     const newManagerId = window.prompt(`Select new reviewer ID:\n\n${managerList}`);
     
-        if (newManagerId && users.some(u => u.id === newManagerId)) {
+    if (newManagerId && users.some(u => u.id === newManagerId)) {
       setIsSubmitting(true);
       try {
-        const result = await batchUpdateStatus(selectedIds, { manager_id: newManagerId }, 'Reassign', `Bulk reassigned to ${newManagerId}`);
+        // BUG-04: was incorrectly calling batchUpdateStatus — now calls batchUpdateProjects
+        const result = await batchUpdateProjects(selectedIds, { manager_id: newManagerId }, 'Reassign', `Bulk reassigned to ${newManagerId}`);
         if (result.success) {
           setToast({ message: 'Projects successfully reassigned', type: 'success' });
           setSelectedIds([]);
@@ -575,6 +566,32 @@ export default function App() {
           type={toast.type} 
           onClose={() => setToast(null)} 
         />
+      )}
+
+      {/* UX-04: In-app confirmation modal (replaces window.confirm) */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 space-y-6">
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-red-500">Confirm Action</p>
+              <p className="text-slate-800 font-bold text-sm leading-relaxed">{confirmModal.message}</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmModal(null)}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmModal.onConfirm}
+                className="btn-primary flex-1 !bg-red-600 border-none"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -24,11 +24,8 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get('/api/auth/config', (req, res) => {
-    res.json({ 
-        clientId: process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID 
-    });
-});
+// NOTE: /api/auth/config is registered after middleware below (line ~225) to ensure
+// cookieParser is already wired. Do not add a second registration here (BUG-01 fix).
 
 // --- 2. Production Security Middleware ---
 const allowedOrigins = [
@@ -43,7 +40,7 @@ app.use(cors({
     origin: (origin, callback) => {
         // Allow if no origin (like mobile apps or curl) or if it's in the whitelist
         // --- SECURITY FIX: Strict CORS Policy ---
-        const isProdCloudRun = /^https:\/\/stride-(service|app)-[a-zA-Z0-9-]+\.(?:[a-zA-Z0-9-]+\.)?run\.app$/.test(origin);
+        const isProdCloudRun = /^https:\/\/stride-[a-zA-Z0-9-]+\.(?:[a-zA-Z0-9-]+\.)?run\.app$/.test(origin);
         
         if (!origin || allowedOrigins.includes(origin) || isProdCloudRun) {
             callback(null, true);
@@ -420,6 +417,7 @@ app.patch('/api/projects/:id', authorize(), async (req, res) => {
         // ---------------------------------------------------------
 
         await db.transaction(async (client) => {
+            // SEC-02: Always validate — including status-only updates — to prevent enum bypass
             const validationErrors = validateProject({ 
                 status, process, type, methodology, 
                 actualInvestment, actualRoi, estimatedBenefit
