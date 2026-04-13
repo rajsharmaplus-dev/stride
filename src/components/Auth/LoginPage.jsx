@@ -107,8 +107,6 @@ export function LoginPage({ onLogin, error }) {
                                             />
                                         </div>
                                     </GoogleOAuthProvider>
-
-
                                 </div>
                             )}
                         </div>

@@ -66,6 +66,9 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 app.use(express.json());
 
+// Health check for testing & monitoring
+app.get('/api/health', (req, res) => res.json({ status: 'ok', engine: db.isPostgres ? 'PostgreSQL' : 'SQLite' }));
+
 // --- SECURITY FIX: No hardcoded secrets in prod ---
 let sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
@@ -132,6 +135,7 @@ function authorize(allowedRoles = []) {
 }
 
 // --- Authentication Endpoints ---
+
 app.post('/api/auth/google-login', async (req, res) => {
     const { credential } = req.body;
     if (!credential) return res.status(400).json({ error: 'Missing credential' });

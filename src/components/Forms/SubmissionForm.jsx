@@ -151,8 +151,8 @@ export function SubmissionForm({ user, users = [], onSubmit, onBack, initialData
             </div>
 
             <div className="gl-card overflow-hidden">
-                {/* Visual Header */}
-                <div className="bg-slate-900 p-6 relative overflow-hidden">
+                {/* Visual Header - Aligned with GL Brand Palette */}
+                <div className="bg-gradient-to-r from-[#0F172A] to-[#1e293b] p-6 relative overflow-hidden border-t-2 border-[#F05A28]/30">
                     <div className="relative z-10">
                         <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-[#F05A28]/20 border border-[#F05A28]/30 text-[#F05A28] text-[8px] font-black uppercase tracking-widest mb-3">
                             {isRework ? 'Resubmission' : 'New Initiative'}
