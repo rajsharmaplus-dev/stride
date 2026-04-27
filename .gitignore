@@ -37,3 +37,7 @@ test-results/
 playwright-report/
 blob-report/
 playwright-.cache/
+
+# Runtime artifacts (PID files, temp files)
+*_pid.txt
+*.tmp

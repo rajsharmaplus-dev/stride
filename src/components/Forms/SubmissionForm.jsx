@@ -130,7 +130,11 @@ export function SubmissionForm({ user, users = [], onSubmit, onBack, initialData
             await onSubmit(formData, false);
             // Clear autosave on successful launch
             localStorage.removeItem(AUTOSAVE_KEY);
-        } catch (e) { setIsSubmitting(false); }
+        } catch (e) {
+            console.error('Launch failed:', e);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -245,7 +249,6 @@ export function SubmissionForm({ user, users = [], onSubmit, onBack, initialData
                             <span className="text-[9px] font-black uppercase tracking-widest" style={{
                                 color: fieldPrecision === 100 ? '#10b981' : fieldPrecision >= 70 ? '#F05A28' : '#94a3b8'
                             }}>{fieldPrecision}%</span>
-                            <span className="text-[9px] font-black text-slate-400 uppercase">Field Precision</span>
                             <div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                 <div 
                                     className="h-full rounded-full transition-all duration-500"

@@ -6,7 +6,7 @@ import { ProjectTable } from './ProjectTable';
 import { ROLE_THEME } from '../../constants/projectConstants';
 
 const ROLE_GREETINGS = {
-    Employee: { segment: '01', label: 'PORTFOLIO OVERVIEW', sub: 'Track and manage your project pipeline', watermark: Layout },
+    Employee: { segment: '01', label: 'OVERVIEW', sub: 'Track and manage your project pipeline', watermark: Layout },
     Manager: { segment: '01', label: 'PORTFOLIO OVERVIEW', sub: 'Team initiatives and portfolio health', watermark: Layout },
     Admin: { segment: '01', label: 'PORTFOLIO OVERVIEW', sub: 'Enterprise-wide initiative landscape', watermark: Layout },
 };

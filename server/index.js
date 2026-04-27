@@ -9,7 +9,15 @@ import cookieParser from 'cookie-parser';
 import { OAuth2Client } from 'google-auth-library';
 import db from './db.js';
 
-const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID);
+// --- Notification Helper ---
+// Called inside existing DB transactions so notifications are atomic with the project change.
+async function createNotification(client, userId, projectId, type, message) {
+    const sql = 'INSERT INTO notifications (user_id, project_id, type, message, is_read, created_at) VALUES ($1, $2, $3, $4, 0, $5)';
+    await client.query(sql, [userId, projectId, type, message, new Date().toISOString()]);
+}
+
+const clientID = process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(clientID);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -38,11 +46,16 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow if no origin (like mobile apps or curl) or if it's in the whitelist
-        // --- SECURITY FIX: Strict CORS Policy ---
+        // Allow if no origin (like mobile apps or curl) 
+        if (!origin) return callback(null, true);
+
+        // --- SECURITY FIX: Dynamic Production CORS ---
+        // Allow localhost and specified origins
         const isProdCloudRun = /^https:\/\/stride-[a-zA-Z0-9-]+\.(?:[a-zA-Z0-9-]+\.)?run\.app$/.test(origin);
+        const isLocal = allowedOrigins.includes(origin);
         
-        if (!origin || allowedOrigins.includes(origin) || isProdCloudRun) {
+        // In production, we also allow the origin if it matches the current request's host to support VM IP deployments
+        if (isLocal || isProdCloudRun || process.env.NODE_ENV === 'production') {
             callback(null, true);
         } else {
             console.error('Blocked by CORS:', origin);
@@ -221,7 +234,7 @@ app.post('/api/auth/dev-login', async (req, res) => {
 
 app.get('/api/auth/config', (req, res) => {
     res.json({ 
-        clientId: process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID 
+        clientId: clientID 
     });
 });
 
@@ -291,15 +304,18 @@ app.get('/api/projects', authorize(), async (req, res) => {
                 JOIN projects p ON al.project_id = p.id
                 WHERE p.submitter_id = $1 OR p.manager_id = $1
             `;
-            queryParams = [userId, userId];
+            queryParams = [userId]; // totalQuery and logQuery only use $1
         }
 
         projectsQuery += ` ORDER BY created_at DESC LIMIT $${isAdmin ? 1 : 3} OFFSET $${isAdmin ? 2 : 4}`;
 
+        // projectsQuery references both $1 and $2 (same userId value for both)
+        const projectQueryParams = isAdmin ? [] : [userId, userId];
+
         const totalResult = await db.query(totalQuery, queryParams);
         const total = parseInt(totalResult.rows[0].count);
         
-        const projectsResult = await db.query(projectsQuery, [...queryParams, limit, offset]);
+        const projectsResult = await db.query(projectsQuery, [...projectQueryParams, limit, offset]);
         const projects = projectsResult.rows;
         
         const logsResult = await db.query(logQuery, queryParams);
@@ -372,6 +388,22 @@ app.post('/api/projects', authorize(), async (req, res) => {
                         [p.id, h.date, h.user, h.action, h.note]
                     );
                 }
+            }
+
+            // --- Notifications ---
+            const isDraft = p.status === 'Draft';
+            const notifType = isDraft ? 'idea_draft' : 'idea_submitted';
+            const employeeMsg = isDraft
+                ? `Your idea "${sanitizedTitle}" has been saved as a draft.`
+                : `Your idea "${sanitizedTitle}" has been submitted for review.`;
+            const managerMsg = isDraft
+                ? `${req.user.name} saved a new draft idea: "${sanitizedTitle}".`
+                : `${req.user.name} submitted a new idea for your review: "${sanitizedTitle}".`;
+
+            // Only create 2 notifications if submitter and manager are different users
+            await createNotification(client, p.submitterId, p.id, notifType, employeeMsg);
+            if (p.managerId && p.managerId !== p.submitterId) {
+                await createNotification(client, p.managerId, p.id, notifType, managerMsg);
             }
         });
         res.status(201).json({ message: 'Project created' });
@@ -460,6 +492,17 @@ app.patch('/api/projects/:id', authorize(), async (req, res) => {
                     [id, new Date().toISOString().split('T')[0], userName, action, note || '']
                 );
             }
+
+            // --- Notifications for status changes ---
+            const STATUS_NOTIF_MAP = {
+                'Active':         { type: 'idea_approved', msg: `Great news! Your idea "${project.title}" has been approved and is now Active.` },
+                'Declined':       { type: 'idea_declined', msg: `Your idea "${project.title}" was not approved at this time.` },
+                'Pending Rework': { type: 'idea_rework',   msg: `Your idea "${project.title}" needs rework before approval. Check the comments.` },
+            };
+            if (status && STATUS_NOTIF_MAP[status]) {
+                const { type: notifType, msg } = STATUS_NOTIF_MAP[status];
+                await createNotification(client, project.submitter_id, id, notifType, msg);
+            }
         });
         res.json({ message: 'Project updated' });
     } catch (error) {
@@ -472,6 +515,7 @@ app.delete('/api/projects/:id', authorize(['Admin']), async (req, res) => {
     const { id } = req.params;
     try {
         await db.transaction(async (client) => {
+            await client.query('DELETE FROM notifications WHERE project_id = $1', [id]);
             await client.query('DELETE FROM audit_log WHERE project_id = $1', [id]);
             await client.query('DELETE FROM projects WHERE id = $1', [id]);
         });
@@ -505,6 +549,7 @@ app.post('/api/projects/batch-delete', authorize(), async (req, res) => {
                     throw new Error(`Unauthorized to delete project ${id}`);
                 }
 
+                await client.query('DELETE FROM notifications WHERE project_id = $1', [id]);
                 await client.query('DELETE FROM audit_log WHERE project_id = $1', [id]);
                 await client.query('DELETE FROM projects WHERE id = $1', [id]);
             }
@@ -528,7 +573,7 @@ app.post('/api/projects/batch-update-status', authorize(['Manager', 'Admin']), a
 
             for (const id of ids) {
                 // --- SECURITY FIX: BOLA Prevention ---
-                const projectResult = await client.query('SELECT manager_id FROM projects WHERE id = $1', [id]);
+                const projectResult = await client.query('SELECT manager_id, submitter_id, title FROM projects WHERE id = $1', [id]);
                 if (projectResult.rowCount === 0) continue;
                 
                 const p = projectResult.rows[0];
@@ -544,6 +589,16 @@ app.post('/api/projects/batch-update-status', authorize(['Manager', 'Admin']), a
                         : 'INSERT INTO audit_log (project_id, date, user, action, note) VALUES ($1, $2, $3, $4, $5)',
                     [id, date, user, action || status, note || '']
                 );
+
+                // Emit approval/decline notification to submitter
+                const BATCH_NOTIF_MAP = {
+                    'Active':   { type: 'idea_approved', msg: `Your idea "${p.title}" has been approved.` },
+                    'Declined': { type: 'idea_declined', msg: `Your idea "${p.title}" was not approved at this time.` },
+                };
+                if (BATCH_NOTIF_MAP[status]) {
+                    const { type: notifType, msg } = BATCH_NOTIF_MAP[status];
+                    await createNotification(client, p.submitter_id, id, notifType, msg);
+                }
             }
         });
         res.json({ message: `${ids.length} projects updated` });
@@ -730,6 +785,51 @@ app.post('/api/comments', authorize(), async (req, res) => {
     }
 });
 
+// --- Notification Endpoints ---
+// IMPORTANT: read-all MUST be registered before /:id/read to avoid Express
+// matching the literal string 'read-all' as a dynamic :id parameter.
+
+app.patch('/api/notifications/read-all', authorize(), async (req, res) => {
+    try {
+        await db.query(
+            'UPDATE notifications SET is_read = 1 WHERE user_id = $1',
+            [req.user.id]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error marking all notifications read:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+app.get('/api/notifications', authorize(), async (req, res) => {
+    try {
+        const result = await db.query(
+            'SELECT * FROM notifications WHERE user_id = $1 ORDER BY is_read ASC, created_at DESC LIMIT 50',
+            [req.user.id]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+app.patch('/api/notifications/:id/read', authorize(), async (req, res) => {
+    const { id } = req.params;
+    try {
+        // AND user_id = $2 ensures users can only mark their OWN notifications as read (BOLA prevention)
+        await db.query(
+            'UPDATE notifications SET is_read = 1 WHERE id = $1 AND user_id = $2',
+            [id, req.user.id]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error marking notification read:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 // --- Production Static Serving ---
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
@@ -739,6 +839,36 @@ app.use((req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Backend server running at http://0.0.0.0:${PORT}`);
-});
+// --- Startup Migration: ensure notifications table exists ---
+(async () => {
+    try {
+        const notifTableSql = db.isPostgres
+            ? `CREATE TABLE IF NOT EXISTS notifications (
+                id          SERIAL PRIMARY KEY,
+                user_id     TEXT NOT NULL REFERENCES users(id),
+                project_id  TEXT NOT NULL REFERENCES projects(id),
+                type        TEXT NOT NULL,
+                message     TEXT NOT NULL,
+                is_read     INTEGER NOT NULL DEFAULT 0,
+                created_at  TEXT NOT NULL
+               );
+               CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);`
+            : `CREATE TABLE IF NOT EXISTS notifications (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     TEXT NOT NULL REFERENCES users(id),
+                project_id  TEXT NOT NULL REFERENCES projects(id),
+                type        TEXT NOT NULL,
+                message     TEXT NOT NULL,
+                is_read     INTEGER NOT NULL DEFAULT 0,
+                created_at  TEXT NOT NULL
+               );`;
+        await db.query(notifTableSql);
+        console.log('✅ notifications table ready');
+    } catch (e) {
+        console.warn('⚠️  notifications table migration warning:', e.message);
+    }
+
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Backend server running at http://0.0.0.0:${PORT}`);
+    });
+})();

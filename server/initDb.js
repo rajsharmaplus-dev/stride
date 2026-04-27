@@ -83,6 +83,30 @@ async function initDb() {
 
             await client.query(commentsTableSql);
 
+            // Notifications table
+            const notificationsTableSql = db.isPostgres
+                ? `CREATE TABLE IF NOT EXISTS notifications (
+                    id          SERIAL PRIMARY KEY,
+                    user_id     TEXT NOT NULL REFERENCES users(id),
+                    project_id  TEXT NOT NULL REFERENCES projects(id),
+                    type        TEXT NOT NULL,
+                    message     TEXT NOT NULL,
+                    is_read     INTEGER NOT NULL DEFAULT 0,
+                    created_at  TEXT NOT NULL
+                  );
+                  CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);`
+                : `CREATE TABLE IF NOT EXISTS notifications (
+                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id     TEXT NOT NULL REFERENCES users(id),
+                    project_id  TEXT NOT NULL REFERENCES projects(id),
+                    type        TEXT NOT NULL,
+                    message     TEXT NOT NULL,
+                    is_read     INTEGER NOT NULL DEFAULT 0,
+                    created_at  TEXT NOT NULL
+                  );`;
+
+            await client.query(notificationsTableSql);
+
             // Mock Data Seeding
             console.log('Seeding mock data...');
             

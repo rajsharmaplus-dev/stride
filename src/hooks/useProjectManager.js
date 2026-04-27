@@ -62,6 +62,7 @@ export function useProjectManager() {
     const [user, setUser] = useState(null);
     const [users, setUsers] = useState([]);
     const [projects, setProjects] = useState([]);
+    const [notifications, setNotifications] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [limit, setLimit] = useState(20);
     const [loading, setLoading] = useState(true);
@@ -109,9 +110,11 @@ export function useProjectManager() {
                 setProjects(pRes.value.items || []);
                 setTotalCount(pRes.value.total || 0);
             }
+            return { success: true };
         } catch (error) {
             console.error('Fetch recovery required:', error);
             if (error.isUnauthorized) setUser(null);
+            return { success: false, error };
         }
     }, [user, limit]);
 
@@ -120,6 +123,25 @@ export function useProjectManager() {
             fetchData();
         }
     }, [fetchData, user]);
+
+    // --- Notification polling ---
+    const fetchNotifications = useCallback(async () => {
+        if (!user) return;
+        try {
+            const data = await fetchApi('/notifications');
+            setNotifications(data || []);
+        } catch (error) {
+            // On failure, keep existing state — do NOT reset to empty (resilience)
+            console.warn('Notification poll failed, retaining last state:', error.message);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) return;
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30_000);
+        return () => clearInterval(interval);
+    }, [user, fetchNotifications]);
 
     const login = async (credential, existingUser = null) => {
         setAuthError(null);
@@ -157,6 +179,7 @@ export function useProjectManager() {
             setUser(null);
             setProjects([]);
             setUsers([]);
+            setNotifications([]);
         }
     };
 
@@ -167,7 +190,7 @@ export function useProjectManager() {
     };
 
     const triggerRefresh = () => {
-        fetchData();
+        return fetchData();
     };
 
     const stats = useMemo(() => {
@@ -392,6 +415,34 @@ export function useProjectManager() {
         }
     };
 
+    // --- Notification actions ---
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    const markRead = async (notificationId) => {
+        // Optimistic update — flip immediately, revert on failure
+        setNotifications(prev =>
+            prev.map(n => n.id === notificationId ? { ...n, is_read: 1 } : n)
+        );
+        try {
+            await fetchApi(`/notifications/${notificationId}/read`, { method: 'PATCH' });
+        } catch (error) {
+            // Revert on failure
+            setNotifications(prev =>
+                prev.map(n => n.id === notificationId ? { ...n, is_read: 0 } : n)
+            );
+        }
+    };
+
+    const markAllRead = async () => {
+        const snapshot = notifications;
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 }))); // optimistic
+        try {
+            await fetchApi('/notifications/read-all', { method: 'PATCH' });
+        } catch (error) {
+            setNotifications(snapshot); // revert on failure
+        }
+    };
+
     return {
         user,
         users,
@@ -415,6 +466,11 @@ export function useProjectManager() {
         updateUserStatus,
         deleteUser,
         loadMore,
-        triggerRefresh
+        triggerRefresh,
+        notifications,
+        unreadCount,
+        fetchNotifications,
+        markRead,
+        markAllRead,
     };
 }

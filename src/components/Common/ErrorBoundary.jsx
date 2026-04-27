@@ -47,7 +47,7 @@ class ErrorBoundary extends React.Component {
             </button>
           </div>
           
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <div className="mt-12 p-6 bg-slate-100 rounded-2xl text-left max-w-2xl w-full overflow-auto border border-slate-200">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 text-center">Developer Trace</p>
               <pre className="text-xs text-red-600 font-mono whitespace-pre-wrap leading-relaxed">
