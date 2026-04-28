@@ -41,3 +41,10 @@ playwright-.cache/
 # Runtime artifacts (PID files, temp files)
 *_pid.txt
 *.tmp
+
+# Runtime & generated output
+playwright-report/
+test-results/
+server.log
+*.pid.txt
+.antigravityrc
