@@ -7,11 +7,11 @@ services:
       args:
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     ports:
-      - "8080:8080"
-    volumes:
-      - ./stride.db:/app/stride.db
+      - "9090:9090"
     env_file:
       - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # Allows container to reach host PostgreSQL on 172.17.0.1
     restart: always
     logging:
       driver: "json-file"

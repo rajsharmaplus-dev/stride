@@ -2,37 +2,50 @@
 
 **Project**: Stride Organizational Rollout
 **Requester**: Raj Sharma
-**Target Environment**: GCP VM (Internal Preview)
+**Target Environment**: GlobalLogic VM — `del1-vm-knwldgraph-new`
+**App URL**: `http://34.87.58.85:9090`
 
 ---
 
-## 1. Network: Ingress Firewall Rule
-**Action**: Create an Ingress firewall rule for the target VM instance.
-- **Port**: `8080` (TCP)
-- **Source Filter**: `0.0.0.0/0` (or specify your organizational IP range for enhanced security)
-- **Target Tags**: Apply to the specific VM instance tags.
+## 1. Network: Firewall Rule
 
-**Justification**: This is required to allow authorized personnel to access the application UI and API via their web browsers. Port 8080 is the designated port for the containerized Stride application.
+**Action**: Create an Ingress firewall rule for the VM instance `del1-vm-knwldgraph-new`.
+- **Port**: `9090` (TCP)
+- **Protocol**: TCP
+- **Source Filter**: `0.0.0.0/0` (or restrict to organizational IP range)
+- **Target**: Apply to the specific VM instance
+
+**Justification**: Stride runs in a Docker container on port 9090. This rule is required for employees to access the application from their browsers. No existing services use port 9090.
 
 ---
 
 ## 2. Identity: OAuth 2.0 Credentials
-**Action**: Create or update an OAuth 2.0 Client ID for a **Web Application**.
-- **New Authorized JavaScript Origins**:
-  - `http://<VM_PUBLIC_IP>:8080`
-- **Authorized Redirect URIs**:
-  - `http://<VM_PUBLIC_IP>:8080`
 
-**Justification**: The application utilizes Google OAuth for secure, identity-based employee authentication. Google’s security policies strictly block login requests from unauthorized or unknown origins. **Registering the VM's Public IP address is mandatory** for the "Login with Google" button to function correctly. 
+**Action**: Add the following to the existing OAuth 2.0 Client ID for the `stride-app-492704` GCP project.
+
+**Client ID**: `801131875690-fb46e9k4i8qd6h6apqtvmpjfl6aae6hg.apps.googleusercontent.com`
+
+- **Authorized JavaScript Origins** — Add:
+  ```
+  http://34.87.58.85:9090
+  ```
+- **Authorized Redirect URIs** — Add:
+  ```
+  http://34.87.58.85:9090
+  ```
+
+**Justification**: The application uses Google OAuth for employee authentication. Google's security policy requires the application's origin to be explicitly registered. Without this, the "Login with Google" button will show an `origin_mismatch` error.
+
+**Console link**:
+```
+https://console.cloud.google.com/apis/credentials/oauthclient/801131875690-fb46e9k4i8qd6h6apqtvmpjfl6aae6hg.apps.googleusercontent.com?project=stride-app-492704
+```
 
 ---
 
-## 3. Infrastructure: Static External IP (Optional but Recommended)
-**Action**: Promote the VM's ephemeral external IP address to a **Static External IP**.
+## 3. Summary of Impact
 
-**Justification**: If the VM restarts and the ephemeral IP changes, it will mismatch the registered OAuth Google origins, causing login failures. A static IP ensures consistent accessibility and configuration stability.
-
----
-
-## Summary of Impact
-These changes are targeted specifically to the Stride VM instance. They do not introduce broader network vulnerabilities or affect other existing project infrastructure.
+- Port 9090 is not used by any existing service on the VM
+- The Docker container is completely isolated from Tomcat, Apache, and all other running services
+- No changes to existing Apache config, Tomcat, or any other app
+- No changes to existing PostgreSQL databases (Stride uses a separate `stride_db` database with a dedicated `stride_user`)
