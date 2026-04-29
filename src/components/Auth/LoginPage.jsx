@@ -8,7 +8,8 @@ export function LoginPage({ onLogin, error }) {
     const [configError, setConfigError] = useState(false);
 
     useEffect(() => {
-        fetch('/api/auth/config')
+        fetch(`${import.meta.env.VITE_BASE_PATH || ''}/api/auth/config`)
+
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return res.json();

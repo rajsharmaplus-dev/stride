@@ -2,7 +2,8 @@ import React from 'react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { PROJECT_STATUS } from '../constants/projectConstants';
 
-const API_BASE = '/api';
+const API_BASE = `${import.meta.env.VITE_BASE_PATH || ''}/api`;
+
 
 /**
  * Consolidated API helper with unified error handling
